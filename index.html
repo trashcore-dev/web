@@ -109,6 +109,10 @@ h1 { color:red; margin-bottom:20px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
     <div id="socialResults" style="margin-top:10px; text-align:left;"></div>
   </div>
 
+  <!-- Back Button -->
+  <button onclick="backToSignup()" style="margin-top:15px; background:orange; color:white; padding:10px 15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
+    Back to Sign Up
+  </button>
 </div>
 
 <!-- Install Banner -->
@@ -148,7 +152,8 @@ function login(){
   const username = document.getElementById('loginUsername').value.trim();
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
-  const user = users.find(u => u.username===username && u.email===email && u.password===password);
+  const user = users.find(u => u.username===username
+&& u.email===email && u.password===password);
   if(user){
     localStorage.setItem('loggedInUser', username);
     document.body.classList.add('logged-in');
@@ -163,7 +168,7 @@ function logout(){
   document.body.classList.remove('logged-in');
   document.getElementById('mainContent').classList.add('hidden');
   document.getElementById('menu').classList.add('hidden');
-  showLogin();
+  showSignup();
 }
 
 function showMainContent(){
@@ -183,6 +188,11 @@ function showSignup(){
   document.getElementById('signupForm').classList.remove('hidden'); 
 }
 
+function backToSignup(){
+  logout();
+  showSignup();
+}
+
 // Hamburger Menu
 const menuBtn = document.getElementById('menuBtn');
 const dropdown = document.getElementById('dropdownMenu');
@@ -197,11 +207,11 @@ window.addEventListener('click', e => {
   }
 });
 
-// Music Search & Download
+// Music Search
 async function searchSong(){
   const query = document.getElementById('songQuery').value.trim();
-  if(!query){ alert('Enter a song name'); return; }
   const resultsDiv = document.getElementById('songResults');
+  if(!query){ alert('Enter a song name'); return; }
   resultsDiv.innerHTML = '<p>Searching...</p>';
   try{
     const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
@@ -221,31 +231,30 @@ async function searchSong(){
   }
 }
 
-// Social Media Downloads
-function downloadSocialMedia(){
+// Social Media Download
+function downloadSocialMedia() {
   const platform = document.getElementById('socialPlatform').value;
   const link = document.getElementById('socialLink').value.trim();
   const out = document.getElementById('socialResults');
-  if(!link){ alert('Please paste a link'); return; }
+  if (!link) { alert('Please paste a link'); return; }
   out.innerHTML = '<p>Processing...</p>';
-
   try {
-    const fileName = `${platform}_download${link.includes('.') ? '.' + link.split('.').pop() : ''}`;
+    const ul = document.createElement('ul');
+    const li = document.createElement('li');
     const a = document.createElement('a');
     a.href = link;
-    a.download = fileName;
-    a.textContent = 'Click here to download';
-    a.style.display = 'inline-block';
-    a.style.padding = '10px';
-    a.style.background = '#32CD32';
-    a.style.color = '#fff';
-    a.style.borderRadius = '8px';
-    a.style.textDecoration = 'none';
-    a.setAttribute('rel','noopener');
-
+    const fileExtension = link.includes('.') ? '.' + link.split('.').pop() : '';
+    a.download = `${platform}_download${fileExtension}`;
+    a.textContent = `Download ${platform} File`;
+    a.style.color = '#32CD32';
+    a.style.textDecoration = 'underline';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    li.appendChild(a);
+    ul.appendChild(li);
     out.innerHTML = '';
-    out.appendChild(a);
-  } catch(err){
+    out.appendChild(ul);
+  } catch (err) {
     console.error(err);
     out.innerHTML = '<p style="color:red">Error preparing download. Make sure the URL points to a file.</p>';
   }
@@ -260,25 +269,20 @@ let deferredPrompt;
 const installBanner = document.getElementById('installBanner');
 const installBtn = document.getElementById('installBtn');
 const dismissBtn = document.getElementById('dismissInstall');
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
   installBanner.style.display = 'block';
 });
-
 installBtn.addEventListener('click', async () => {
   installBanner.style.display = 'none';
   if(deferredPrompt){
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log('User choice:', outcome);
     deferredPrompt = null;
   }
 });
-
 dismissBtn.addEventListener('click', () => { installBanner.style.display = 'none'; });
-
 </script>
 </body>
 </html>
