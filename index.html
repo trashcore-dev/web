@@ -12,7 +12,7 @@ body { font-family: Arial,sans-serif; margin:0; padding:0; text-align:center; tr
 body.logged-in { background:#000; color:white; }
 body:not(.logged-in) { background: linear-gradient(135deg, #FF4D4D 0%, #B3B3B3 100%); color:white; }
 .hidden { display:none; }
-.form-container, .card-container, .card { background:#1E90FF; padding:30px; border-radius:16px; margin:10px auto; max-width:450px; color:white; transition: background 0.3s; }
+.form-container, .card-container, .card { background:#1E90FF; padding:30px; border-radius:16px; margin:10px auto; color:white; transition: background 0.3s; }
 body.logged-in .card, body.logged-in .card-container { background:#111; }
 input, button { width:90%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
 button { font-weight:bold; cursor:pointer; transition:0.3s; }
@@ -42,7 +42,8 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 #appDownloadPrompt button { margin-left:10px; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; border:none; color:white; }
 #downloadAppBtn { background:#32CD32; }
 #dismissAppBtn { background:#FF4500; }
-.card-row { display:flex; flex-direction:column; gap:20px; }
+/* Responsive grid for main cards */
+.card-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-top:20px; }
 </style>
 </head>
 <body>
@@ -92,6 +93,7 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 <div class="card-container hidden" id="mainContent">
   <h1 class="page-title">TRASHCORE SITE</h1>
   <div class="card-row">
+    <!-- Services Card -->
     <div class="card">
       <a href="https://t.me/YourBotUsername"><img src="https://files.catbox.moe/7x996w.jpg" alt="Logo" class="logo"></a>
       <h2>MY SERVICES</h2>
@@ -102,6 +104,7 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
+    <!-- Music Search Card -->
     <div class="card" id="musicCard">
       <h2>Music Search & Download</h2>
       <input type="text" id="songQuery" placeholder="Enter song name or YouTube link">
@@ -109,6 +112,7 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <div id="songResults" style="margin-top:10px; text-align:left;"></div>
     </div>
 
+    <!-- Mediafire Download Card -->
     <div class="card" id="mediafireCard">
       <h2>Mediafire File Download</h2>
       <input type="text" id="fileLink" placeholder="Paste Mediafire link here">
@@ -130,25 +134,20 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 let users = JSON.parse(localStorage.getItem('users')) || [];
 if(localStorage.getItem('loggedInUser')) enterApp(localStorage.getItem('loggedInUser'));
 
-function showLoginForm(){
-  document.getElementById('signupForm').classList.add('hidden');
-  document.getElementById('loginForm').classList.remove('hidden');
-}
-function showSignupForm(){
-  document.getElementById('loginForm').classList.add('hidden');
-  document.getElementById('signupForm').classList.remove('hidden');
-}
+function showLoginForm(){ document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); }
+function showSignupForm(){ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); }
 
 function isValidUsername(name){ return /^[a-zA-Z0-9_]{3,15}$/.test(name); }
 function isValidPassword(pw){ return pw.length >= 6; }
 
 function signup(){
-  const username=document.getElementById('signupUsername').value.trim();
-  const email=document.getElementById('signupEmail').value.trim();
-  const password=document.getElementById('signupPassword').value;
-  if(!username||!email||!password){ alert('Fill all fields'); return; }
+  const username = document.getElementById('signupUsername').value.trim();
+  const email =
+document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  if(!username || !email || !password){ alert('Fill all fields'); return; }
   if(!isValidUsername(username)){ alert('Invalid username'); return; }
-  if(!isValidPassword(password)){ alert('Password must be at least 6 characters'); return; }
+  if(!isValidPassword(password)){ alert('Password min 6 chars'); return; }
   if(users.find(u=>u.username===username)){ alert('Username already exists'); return; }
   users.push({username,email,password});
   localStorage.setItem('users', JSON.stringify(users));
@@ -157,95 +156,111 @@ function signup(){
 }
 
 function login(){
-  const username=document.getElementById('loginUsername').value.trim();
-  const email=document.getElementById('loginEmail').value.trim();
-  const password=document.getElementById('loginPassword').value;
-  const user=users.find(u=>u.username===username && u.email===email && u.password===password);
-  if(user){ localStorage.setItem('loggedInUser', username); enterApp(username); }
-  else alert('Invalid credentials.');
-}
-
-function enterApp(user){
-  document.body.classList.add('logged-in');
-  document.getElementById('signupForm').classList.add('hidden');
-  document.getElementById('loginForm').classList.add('hidden');
-  document.getElementById('mainContent').classList.remove('hidden');
-  document.getElementById('menu').style.display="block";
-  const music=document.getElementById('bgMusic'); if(music) music.play().catch(e=>console.log("Autoplay blocked",e));
-  setTimeout(()=>{ document.getElementById('appDownloadPrompt').style.display='block'; },3000);
+  const username = document.getElementById('loginUsername').value.trim();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const user = users.find(u => u.username===username && u.email===email && u.password===password);
+  if(user){
+    localStorage.setItem('loggedInUser', username);
+    enterApp(username);
+  } else {
+    alert('Invalid credentials.');
+  }
 }
 
 function logout(){
   localStorage.removeItem('loggedInUser');
   document.body.classList.remove('logged-in');
   document.getElementById('mainContent').classList.add('hidden');
-  document.getElementById('menu').style.display="none";
-  showSignupForm();
+  document.getElementById('menu').classList.add('hidden');
+  showLoginForm();
+}
+
+function enterApp(username){
+  document.body.classList.add('logged-in');
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  document.getElementById('menu').classList.remove('hidden');
+  // autoplay music
+  const music = document.getElementById('bgMusic');
+  if(music) music.play().catch(e=>console.log("Autoplay blocked:", e));
 }
 
 // Hamburger Menu
-const menuBtn=document.getElementById('menuBtn');
-const dropdown=document.getElementById('dropdownMenu');
-menuBtn.addEventListener('click',()=>{ dropdown.classList.toggle('show'); menuBtn.classList.toggle('open'); });
-window.addEventListener('click', e=>{ if(!e.target.matches('.menu-btn')&&!e.target.matches('.menu-btn *')){ dropdown.classList.remove('show'); menuBtn.classList.remove('open'); } });
+const menuBtn = document.getElementById('menuBtn');
+const dropdown = document.getElementById('dropdownMenu');
+menuBtn.addEventListener('click', ()=>{
+  dropdown.classList.toggle('show');
+  menuBtn.classList.toggle('open');
+});
+window.addEventListener('click', e=>{
+  if(!e.target.matches('.menu-btn') && !e.target.matches('.menu-btn *')){
+    dropdown.classList.remove('show');
+    menuBtn.classList.remove('open');
+  }
+});
 
-// Music Search
+// Music Search & Download
 async function searchSong(){
-  const query=document.getElementById('songQuery').value.trim();
+  const query = document.getElementById('songQuery').value.trim();
+  const resultsDiv = document.getElementById('songResults');
   if(!query){ alert('Enter a song name'); return; }
-  const resultsDiv=document.getElementById('songResults'); resultsDiv.innerHTML='<p>Searching...</p>';
+  resultsDiv.innerHTML = '<p>Searching...</p>';
   try{
-    const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
-    const data=await res.json(); resultsDiv.innerHTML='';
-    if(data.results.length===0){ resultsDiv.innerHTML='<p>No results found.</p>'; return; }
-    const ul=document.createElement('ul');
+    const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
+    const data = await response.json();
+    resultsDiv.innerHTML = '';
+    if(data.results.length === 0){ resultsDiv.innerHTML = '<p>No results found.</p>'; return; }
+    const ul = document.createElement('ul');
     data.results.forEach(song=>{
-      const li=document.createElement('li');
-      li.innerHTML=`${song.trackName} - ${song.artistName} <a href="${song.previewUrl}" target="_blank" download> [Preview/Download]</a>`;
+      const li = document.createElement('li');
+      li.innerHTML = `${song.trackName} - ${song.artistName} <a href="${song.previewUrl}" target="_blank" download> [Preview/Download]</a>`;
       ul.appendChild(li);
-    }); resultsDiv.appendChild(ul);
-  }catch(err){ resultsDiv.innerHTML='<p>Error fetching songs.</p>'; console.error(err); }
+    });
+    resultsDiv.appendChild(ul);
+  }catch(err){
+    resultsDiv.innerHTML = '<p>Error fetching songs.</p>';
+    console.error(err);
+  }
 }
 
 // Mediafire Download
 function downloadFile(){
-const link = document.getElementById('fileLink').value.trim();
+  const link = document.getElementById('fileLink').value.trim();
   const resultDiv = document.getElementById('downloadResult');
-  if (!link) { alert('Enter Mediafire link'); return; }
+  if(!link){ alert('Enter Mediafire link'); return; }
   resultDiv.innerHTML = `<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
 }
 
-// App Download Buttons
-document.getElementById("downloadAppBtn").addEventListener("click", () => {
-  window.open("https://example.com/trashcore-app.apk", "_blank");
+// App Download Prompt
+document.getElementById("downloadAppBtn").addEventListener("click", ()=>{
+  window.open("https://example.com/trashcore-app.apk","_blank");
 });
-document.getElementById("dismissAppBtn").addEventListener("click", () => {
-  document.getElementById("appDownloadPrompt").style.display = "none";
+document.getElementById("dismissAppBtn").addEventListener("click", ()=>{
+  document.getElementById("appDownloadPrompt").style.display="none";
 });
 
 // Background Music Toggle
-const music = document.getElementById('bgMusic');
 const musicBtn = document.getElementById('musicBtn');
-musicBtn.addEventListener('click', () => {
-  if (music.muted) {
-    music.muted = false;
+musicBtn.addEventListener('click', ()=>{
+  if(music.muted){
+    music.muted=false;
     music.play();
-    musicBtn.textContent = '🔊 Music Playing';
-  } else {
+    musicBtn.textContent='🔊 Music Playing';
+  }else{
     music.pause();
-    musicBtn.textContent = '🔇 Music Paused';
+    musicBtn.textContent='🔇 Music Paused';
   }
 });
 
 // Refresh & Exit Functions
-function refreshPage() { location.reload(); }
-function exitPage() { if (confirm("Are you sure you want to exit?")) { window.open('', '_self'); window.close(); } }
+function refreshPage(){ location.reload(); }
+function exitPage(){ if(confirm("Are you sure you want to exit?")){ window.open('', '_self'); window.close(); } }
 
-// Service Worker registration
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(() => {
-    console.log('Service Worker registered');
-  });
+// Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>{ console.log('Service Worker registered'); });
 }
 </script>
 </body>
