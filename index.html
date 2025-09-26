@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trashcore Service</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- PWA Manifest -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E90FF">
 <link rel="apple-touch-icon" href="icon.png">
@@ -14,45 +12,56 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
-body { font-family: Arial, sans-serif; margin:0; padding:0; text-align:center; transition: background 0.5s ease; }
-body.logged-in { background: #000; color: white; }
-body:not(.logged-in) { background: linear-gradient(135deg, #FF4D4D 0%, #B3B3B3 100%); color: white; }
+/* Global */
+body { font-family: Arial,sans-serif; margin:0; padding:0; text-align:center; transition: background 0.5s ease; }
+body.logged-in { background:#000; color:#fff; }
+body:not(.logged-in) { background:linear-gradient(135deg,#FF4D4D 0%,#B3B3B3 100%); color:#fff; }
 .hidden { display:none; }
-
-/* Cards & Forms */
-.form-container, .card-container, .card {
-  background: #1E90FF; padding: 30px; border-radius: 16px; margin: 10px auto; max-width:450px; color:white; transition:0.3s;
-}
+.card-container, .form-container, .card { max-width:95%; margin:10px auto; padding:20px; border-radius:12px; background:#1E90FF; color:#fff; transition:0.3s; }
 body.logged-in .card, body.logged-in .card-container { background:#111; }
-input, button { width:90%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
-button { background:#32CD32; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
-button:hover { background:#28a428; }
-.toggle-form { background:none; color:yellow; border:none; cursor:pointer; text-decoration:underline; }
-h1 { color:red; }
-.logo { width:100px; height:100px; border-radius:50%; margin-bottom:20px; }
-
-/* Buttons */
-.button { display:flex; justify-content:center; align-items:center; gap:10px; width:100%; margin:12px 0; padding:15px; font-size:18px; font-weight:bold; color:white; text-decoration:none; border-radius:12px; cursor:pointer; }
-.telegram { background: linear-gradient(90deg,#00BFFF,#1E90FF); }
-.whatsapp { background: linear-gradient(90deg,#32CD32,#00FF7F); }
-.logout-btn { background:#FF4500; margin-top:15px; }
+input, button { width:90%; padding:10px; margin:6px 0; border-radius:8px; border:none; }
+button { font-weight:bold; cursor:pointer; transition:0.3s; }
+button:hover { opacity:0.85; }
+h1 { font-size:1.8em; color:red; margin-bottom:10px; }
+.logo { width:80px; height:80px; border-radius:50%; margin-bottom:15px; }
+.button { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:8px 0; padding:12px; border-radius:10px; font-size:16px; text-decoration:none; color:#fff; }
+.telegram { background:linear-gradient(90deg,#00BFFF,#1E90FF); }
+.whatsapp { background:linear-gradient(90deg,#32CD32,#00FF7F); }
+.logout-btn { background:#FF4500; margin-top:10px; }
 .logout-btn:hover { background:#e03e00; }
 
+/* Grid Layout */
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+  margin-top: 15px;
+}
+@media (min-width: 768px) {
+  .grid-container { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Card Styling */
+.card {
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  min-height:320px; padding:20px; border-radius:12px; background:#1E90FF; color:white; transition:background 0.3s, transform 0.2s;
+}
+.card:hover { transform:translateY(-5px); }
+.card h2 { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.card i.section-icon { font-size:24px; color:yellow; }
+
 /* Menu */
-.menu { position:absolute; top:20px; right:20px; display:none; }
-.menu-btn { background: rgba(255,255,255,0.8); border:none; padding:10px 15px; border-radius:50px; font-size:16px; cursor:pointer; display:flex; align-items:center; gap:5px; }
-.menu-btn.open i { transform: rotate(90deg); }
-.dropdown { position:absolute; top:55px; right:0; background:#000; color:#fff; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.5); overflow:hidden; min-width:180px; max-height:0; opacity:0; transform:translateY(-10px); transition:all 0.3s; }
+.menu { position:absolute; top:15px; right:15px; display:none; }
+.menu-btn { background:rgba(255,255,255,0.8); border:none; padding:8px 12px; border-radius:50px; font-size:14px; display:flex; align-items:center; gap:5px; cursor:pointer; }
+.menu-btn.open i { transform:rotate(90deg); }
+.dropdown { position:absolute; top:45px; right:0; background:#000; border-radius:8px; overflow:hidden; min-width:150px; max-height:0; opacity:0; transform:translateY(-8px); transition:all 0.25s; }
 .dropdown.show { max-height:500px; opacity:1; transform:translateY(0); }
-.dropdown a { display:block; padding:12px; text-decoration:none; color:#fff; }
+.dropdown a { display:block; padding:10px 12px; text-decoration:none; color:#fff; font-size:14px; }
 .dropdown a:hover { background:#222; }
 
-/* Chat */
-.chat-messages { background:#222; padding:10px; height:200px; overflow-y:auto; margin:10px 0; text-align:left; border-radius:8px; }
-
 /* Install Banner */
-#installBanner { display:none; position:fixed; bottom:20px; left:10px; right:10px; background:#1E90FF; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1000; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
-#installBanner button { margin-left:10px; padding:10px 15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:white; }
+#installBanner { display:none; position:fixed; bottom:15px; left:5px; right:5px; background:#1E90FF; color:white; padding:12px; border-radius:10px; text-align:center; z-index:1000; }
+#installBanner button { margin-left:6px; padding:8px 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; color:white; }
 #installBtn { background:#32CD32; }
 #dismissInstall { background:#FF4500; }
 </style>
@@ -61,14 +70,15 @@ h1 { color:red; }
 
 <!-- Background Music -->
 <audio id="bgMusic" src="https://files.catbox.moe/dqlb0t.mp3" muted autoplay loop></audio>
-<button id="musicBtn" style="position:fixed; bottom:20px; right:20px; padding:12px 18px; border:none; border-radius:8px; background:#32CD32; color:white; font-weight:bold; cursor:pointer; z-index:1000;">
-  🔊 Play Music
-</button>
+<button id="musicBtn" style="position:fixed; bottom:15px; right:15px; padding:10px 15px; border:none; border-radius:8px; background:#32CD32; color:#fff; font-weight:bold; cursor:pointer; z-index:1000;">🔊 Music</button>
+
+<!-- Floating Install App Button -->
+<button id="installAppBtn" style="position:fixed; top:15px; right:15px; z-index:2000; background:#32CD32; color:white; border:none; border-radius:8px; padding:10px 14px; font-weight:bold; cursor:pointer; display:none;">📲 Install App</button>
 
 <!-- Sign Up -->
 <div class="form-container" id="signupForm">
   <h1>Sign Up</h1>
-  <input type="text" id="signupUsername" placeholder="Username (3-15 letters/numbers/_)">
+  <input type="text" id="signupUsername" placeholder="Username (3-15 chars)">
   <input type="email" id="signupEmail" placeholder="Email">
   <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
   <button onclick="signup()">Create Account</button>
@@ -82,16 +92,14 @@ h1 { color:red; }
   <input type="email" id="loginEmail" placeholder="Email">
   <input type="password" id="loginPassword" placeholder="Password">
   <button onclick="login()">Login</button>
-  <button class="toggle-form" onclick="showSignup()">Don't have an account? Sign Up</button>
+  <button class="toggle-form" onclick="showSignup()">Sign Up</button>
 </div>
 
 <!-- Menu -->
 <div class="menu" id="menu">
-  <button class="menu-btn" id="menuBtn">
-    <i class="fas fa-bars"></i> <span>Menu</span>
-  </button>
+  <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i> Menu</button>
   <div class="dropdown" id="dropdownMenu">
-    <a href="https://t.me/trashcoredev">Chat with Owner</a>
+    <a href="https://t.me/trashcoredev">Owner</a>
     <a href="https://youtube.com/@giddytennor">YouTube</a>
     <a href="https://www.instagram.com/putrazyy_xd_">Instagram</a>
     <a href="#" onclick="refreshPage()">Refresh</a>
@@ -102,187 +110,149 @@ h1 { color:red; }
 <!-- Main Content -->
 <div class="card-container hidden" id="mainContent">
   <h1>TRASHCORE SITE</h1>
+  <div class="grid-container">
+    <!-- Services -->
+    <div class="card">
+      <i class="fas fa-server section-icon"></i>
+      <h2>Services</h2>
+      <a href="https://t.me/TrashcoreBot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 1</a>
+      <a href="http://t.me/Traschoreultra_bot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 2</a>
+      <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Telegram Group</a>
+      <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp Channel</a>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
 
-  <!-- Services -->
-  <div class="card">
-    <a href="https://t.me/YourBotUsername"><img src="https://files.catbox.moe/7x996w.jpg" alt="Logo" class="logo"></a>
-    <h2>MY SERVICES</h2>
-    <a href="https://t.me/TrashcoreBot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 1</a>
-    <a href="http://t.me/Traschoreultra_bot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 2</a>
-    <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Join Telegram group</a>
-    <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp Channel</a>
-    <button class="logout-btn" onclick="logout()">Logout</button>
-  </div>
+    <!-- Music -->
+    <div class="card" id="musicCard">
+      <i class="fas fa-music section-icon"></i>
+      <h2>Music Search</h2>
+      <input type="text" id="songQuery" placeholder="Song name">
+      <button onclick="searchSong()">Search</button>
+      <div id="songResults"></div>
+    </div>
 
-  <!-- Music -->
-  <div class="card" id="musicCard">
-    <h2>Music Search</h2>
-    <input type="text" id="songQuery" placeholder="Enter song name">
-    <button onclick="searchSong()">Search</button>
-    <div id="songResults"></div>
-  </div>
-
-  <!-- Chat -->
-  <div class="card" id="chatCard">
-    <h2>Public Chat</h2>
-    <div class="chat-messages" id="publicMessages"></div>
-    <input type="text" id="publicInput" placeholder="Type a message">
-    <button onclick="sendPublicMessage()">Send</button>
-  </div>
-
-  <!-- File Download -->
-  <div class="card" id="downloadCard">
-    <h2>File Downloads</h2>
-    <input type="text" id="fileLink" placeholder="Enter Mediafire link">
-    <button onclick="downloadFile()">Download</button>
-    <div id="downloadResult"></div>
+    <!-- File Download -->
+    <div class="card" id="downloadCard">
+      <i class="fas fa-download section-icon"></i>
+      <h2>File Download</h2>
+      <input type="text" id="fileLink" placeholder="Mediafire link">
+      <button onclick="downloadFile()">Download</button>
+      <div id="downloadResult"></div>
+    </div>
   </div>
 </div>
 
 <!-- Install Banner -->
 <div id="installBanner">
-  <span>Install Trashcore on your device for a better experience!</span>
+  <span>Install Trashcore for better experience!</span>
   <button id="installBtn">Install</button>
   <button id="dismissInstall">No Thanks</button>
 </div>
 
 <script>
-// === Users ===
+// Users
 let users = JSON.parse(localStorage.getItem("users")) || [];
-let publicMessages = JSON.parse(localStorage.getItem("publicMessages")) || [];
 
-// === Signup/Login ===
+// Signup/Login
 function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
 function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
 
 function signup(){
-  const username=document.getElementById("signupUsername").value.trim();
-  const email=document.getElementById("signupEmail").value.trim();
-  const password=document.getElementById("signupPassword").value.trim();
-  if(!/^[a-zA-Z0-9_]{3,15}$/.test(username)) return alert("Invalid username!");
-  if(password.length<6) return alert("Password too short!");
-  if(users.find(u=>u.username===username)) return alert("User exists!");
-  users.push({username,email,password});
+  const u=document.getElementById("signupUsername").value.trim();
+  const e=document.getElementById("signupEmail").value.trim();
+  const p=document.getElementById("signupPassword").value.trim();
+  if(!/^[a-zA-Z0-9_]{3,15}$/.test(u)) return alert("Invalid username!");
+  if(p.length<6) return alert("Password too short!");
+  if(users.find(x=>x.username===u)) return alert("User exists!");
+  users.push({username:u,email:e,password:p});
   localStorage.setItem("users",JSON.stringify(users));
-  alert("Account created! Please login.");
+  alert("Account created! Login.");
   showLogin();
 }
 
 function login(){
-  const username=document.getElementById("loginUsername").value.trim();
-  const email=document.getElementById("loginEmail").value.trim();
-  const password=document.getElementById("loginPassword").value.trim();
-  const user=users.find(u=>u.username===username && u.email===email && u.password===password);
-  if(user){ enterApp(username); } else { alert("Invalid credentials!"); }
+  const u=document.getElementById("loginUsername").value.trim();
+  const e=document.getElementById("loginEmail").value.trim();
+  const p=document.getElementById("loginPassword").value.trim();
+  const user=users.find(x=>x.username===u && x.email===e && x.password===p);
+  if(user){ enterApp(u); } else { alert("Invalid credentials!"); }
 }
 
-function enterApp(username){
-  localStorage.setItem("loggedInUser",username);
+function enterApp(u){
+  localStorage.setItem("loggedInUser",u);
   document.body.classList.add("logged-in");
   document.getElementById("signupForm").classList.add("hidden");
   document.getElementById("loginForm").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("menu").style.display="block";
-  showPublicMessages();
 }
-
-// Restore session
 if(localStorage.getItem("loggedInUser")){ enterApp(localStorage.getItem("loggedInUser")); }
 function logout(){ localStorage.removeItem("loggedInUser"); location.reload(); }
 
-// === Menu ===
+// Menu
 const menuBtn=document.getElementById("menuBtn");
 const dropdown=document.getElementById("dropdownMenu");
 menuBtn.addEventListener("click",()=>{ menuBtn.classList.toggle("open"); dropdown.classList.toggle("show"); });
 window.addEventListener("click",e=>{ if(!e.target.closest(".menu")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); }});
 
-// === Music Search ===
-async function searchSong(){
-  const query=document.getElementById("songQuery").value.trim();
-  if(!query){ alert("Enter a song name"); return; }
-  const resultsDiv=document.getElementById("songResults");
-  resultsDiv.innerHTML="Searching...";
-  try{
-    const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=5`);
-    const data=await res.json();
-    resultsDiv.innerHTML="";
-    if(data.results.length===0){ resultsDiv.innerHTML="No results"; return; }
-    data.results.forEach(song=>{
-      const p=document.createElement("p");
-      p.innerHTML=`${song.trackName} - ${song.artistName} <a href="${song.previewUrl}" target="_blank">Preview</a>`;
-      resultsDiv.appendChild(p);
-    });
-  }catch{ resultsDiv.innerHTML="Error fetching songs."; }
-}
-
-// === Chat ===
-function sendPublicMessage(){
-  const text=document.getElementById("publicInput").value.trim();
-  if(!text) return;
-  const from=localStorage.getItem("loggedInUser")||"Guest";
-  publicMessages.push({from,text,time:new Date().toLocaleTimeString()});
-  localStorage.setItem("publicMessages",JSON.stringify(publicMessages));
-  document.getElementById("publicInput").value="";
-  showPublicMessages();
-}
-function showPublicMessages(){
-  const box=document.getElementById("publicMessages");
-  box.innerHTML="";
-  publicMessages.forEach(m=>{
-    const p=document.createElement("p");
-    p.textContent=`[${m.time}] ${m.from}: ${m.text}`;
-    box.appendChild(p);
-  });
-  box.scrollTop=box.scrollHeight;
-}
-
-// === File Download ===
-function downloadFile(){
-  const link=document.getElementById("fileLink").value.trim();
-  const out=document.getElementById("downloadResult");
-  if(!link||!link.includes("mediafire.com")){ out.innerHTML="Invalid Mediafire link"; return; }
-  out.innerHTML=`<a href="${link}" target="_blank" style="color:yellow;font-weight:bold;">Click here to download</a>`;
-}
-
-// === Music Toggle ===
+// Music
 const music=document.getElementById("bgMusic");
-const musicBtn=document.getElementById("musicBtn");
-musicBtn.addEventListener("click",()=>{
-  if(music.muted){ music.muted=false; music.play(); musicBtn.textContent="🔊 Music Playing"; }
-  else{ music.pause(); musicBtn.textContent="🔇 Music Paused"; }
-});
+document.getElementById("musicBtn").addEventListener("click",()=>{ if(music.muted){ music.muted=false; music.play(); } else music.pause(); });
 
-// === Utils ===
+// Music search
+async function searchSong(){
+  const q=document.getElementById("songQuery").value.trim();
+  if(!q) return alert("Enter song");
+  const resDiv=document.getElementById("songResults");
+  resDiv.innerHTML="Searching...";
+  try{ const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&limit=5`);
+    const data=await res.json(); resDiv.innerHTML=""; data.results.forEach(s=>{ const p=document.createElement("p"); p.innerHTML=`${s.trackName} - ${s.artistName} <a href="${s.previewUrl}" target="_blank">Preview</a>`; resDiv.appendChild(p); });
+  }catch{ resDiv.innerHTML="Error fetching songs"; }
+}
+
+// File Download
+function downloadFile(){ 
+  const link=document.getElementById("fileLink").value.trim(); 
+  const out=document.getElementById("downloadResult"); 
+  if(!link||!link.includes("mediafire.com")){ out.innerHTML="Invalid link"; return; }
+  out.innerHTML=`<a href="${link}" target="_blank" style="color:yellow;font-weight:bold;">Click to download</a>`;
+}
+
+// Utils
 function refreshPage(){ location.reload(); }
 function exitPage(){ window.close(); }
 
-// === PWA Install ===
+// PWA Install
 let deferredPrompt;
 const installBanner=document.getElementById("installBanner");
 const installBtn=document.getElementById("installBtn");
 const dismissBtn=document.getElementById("dismissInstall");
+const installAppBtn=document.getElementById("installAppBtn");
 
-window.addEventListener("beforeinstallprompt",(e)=>{
-  e.preventDefault();
-  deferredPrompt=e;
-  installBanner.style.display="block";
+window.addEventListener("beforeinstallprompt",(e)=>{ 
+  e.preventDefault(); 
+  deferredPrompt=e; 
+  installBanner.style.display="block"; 
+  installAppBtn.style.display="block";
 });
 
-installBtn.addEventListener("click",async()=>{
-  installBanner.style.display="none";
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    const choice=await deferredPrompt.userChoice;
-    console.log("User choice:", choice.outcome);
-    deferredPrompt=null;
+installBtn.addEventListener("click",async()=>{ 
+  installBanner.style.display="none"; 
+  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; installAppBtn.style.display="none"; }
+});
+dismissBtn.addEventListener("click",()=>{ installBanner.style.display="none"; installAppBtn.style.display="none"; });
+
+installAppBtn.addEventListener("click", async () => {
+  if(deferredPrompt){ 
+    deferredPrompt.prompt(); 
+    deferredPrompt=null; 
+    installAppBtn.style.display="none"; 
+    installBanner.style.display="none"; 
   }
 });
-dismissBtn.addEventListener("click",()=>{ installBanner.style.display="none"; });
 
-// === Service Worker ===
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('service-worker.js').then(()=>console.log("Service Worker registered"));
-}
+// Service Worker
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').then(()=>console.log("SW registered")); }
 </script>
 </body>
 </html>
