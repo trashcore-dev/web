@@ -65,7 +65,7 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
   <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
   <select id="signupCountry"><option value="">Select Country</option></select>
   <button id="createAccountBtn" style="background:#32CD32; color:white;" onclick="signup()">Create Account</button>
-  <button class="toggle-form" id="alreadyAccountBtn" style="background:#FFA500; color:white;" onclick="showLogin()">Already have an account? Login</button>
+  <button class="toggle-form" id="alreadyAccountBtn" style="background:#FFA500; color:white;" onclick="showLoginForm()">Already have an account? Login</button>
   <div style="margin-top:10px; color:black;">©️ 2025 Trashcore Devs</div>
 </div>
 
@@ -76,7 +76,7 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
   <input type="email" id="loginEmail" placeholder="Email">
   <input type="password" id="loginPassword" placeholder="Password">
   <button onclick="login()" style="background:#32CD32; color:white;">Login</button>
-  <button class="toggle-form" onclick="showSignup()" style="background:#FFA500; color:white;">Don't have an account? Sign Up</button>
+  <button class="toggle-form" onclick="showSignupForm()" style="background:#FFA500; color:white;">Don't have an account? Sign Up</button>
 </div>
 
 <!-- Hamburger Menu -->
@@ -111,8 +111,7 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
     <div class="card" id="musicCard">
       <h2>Music Search & Download</h2>
       <input type="text" id="songQuery" placeholder="Enter song name or YouTube link">
-      <button onclick="search
-Song()" style="background:#32CD32; color:white;">Search</button>
+      <button onclick="searchSong()" style="background:#32CD32; color:white;">Search</button>
       <div id="songResults" style="margin-top:10px; text-align:left;"></div>
     </div>
 
@@ -136,10 +135,7 @@ Song()" style="background:#32CD32; color:white;">Search</button>
 <script>
 // Users & Auth
 let users = JSON.parse(localStorage.getItem('users')) || [];
-
-if(localStorage.getItem('loggedInUser')){
-  enterApp(localStorage.getItem('loggedInUser'));
-}
+if(localStorage.getItem('loggedInUser')) enterApp(localStorage.getItem('loggedInUser'));
 
 function isValidUsername(name){ return /^[a-zA-Z0-9_]{3,15}$/.test(name); }
 function isValidPassword(pw){ return pw.length >= 6; }
@@ -156,7 +152,7 @@ function signup(){
   users.push({username,email,password,country});
   localStorage.setItem('users', JSON.stringify(users));
   alert('Account created! Please login.');
-  showLogin();
+  showLoginForm();
 }
 
 function login(){
@@ -175,7 +171,7 @@ function logout(){
   document.body.classList.remove('logged-in');
   document.getElementById('mainContent').classList.add('hidden');
   document.getElementById('menu').classList.add('hidden');
-  showLogin();
+  showSignupForm();
 }
 
 function enterApp(user){
@@ -190,8 +186,8 @@ function enterApp(user){
 }
 
 // Form toggles
-function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
-function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
+function showLoginForm(){ document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); }
+function showSignupForm(){ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); }
 
 // Hamburger Menu
 const menuBtn = document.getElementById('menuBtn');
