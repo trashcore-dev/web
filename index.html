@@ -30,15 +30,12 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 .logout-btn { background:#FF4500; margin-top:10px; }
 .logout-btn:hover { background:#e03e00; }
 
-/* Grid Layout */
+/* Stack sections vertically in rows */
 .grid-container {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column; /* Stack vertically */
   gap: 15px;
   margin-top: 15px;
-}
-@media (min-width: 768px) {
-  .grid-container { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Card Styling */
@@ -58,12 +55,6 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 .dropdown.show { max-height:500px; opacity:1; transform:translateY(0); }
 .dropdown a { display:block; padding:10px 12px; text-decoration:none; color:#fff; font-size:14px; }
 .dropdown a:hover { background:#222; }
-
-/* Install Banner */
-#installBanner { display:none; position:fixed; bottom:15px; left:5px; right:5px; background:#1E90FF; color:white; padding:12px; border-radius:10px; text-align:center; z-index:1000; }
-#installBanner button { margin-left:6px; padding:8px 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; color:white; }
-#installBtn { background:#32CD32; }
-#dismissInstall { background:#FF4500; }
 
 /* In-page app download prompt */
 #appDownloadPrompt { display:none; position:fixed; bottom:80px; left:10px; right:10px; background:#32CD32; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1500; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-weight:bold; }
@@ -152,13 +143,6 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
   <button id="dismissAppBtn">No Thanks</button>
 </div>
 
-<!-- Install Banner -->
-<div id="installBanner">
-  <span>Install Trashcore for better experience!</span>
-  <button id="installBtn">Install</button>
-  <button id="dismissInstall">No Thanks</button>
-</div>
-
 <script>
 // Users
 let users = JSON.parse(localStorage.getItem("users")) || [];
@@ -196,9 +180,7 @@ function enterApp(u){
   document.getElementById("loginForm").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("menu").style.display="block";
-
-  // Show in-page download prompt
-  document.getElementById("appDownloadPrompt").style.display="block";
+  document.getElementById("appDownloadPrompt").style.display="block"; // show green prompt
 }
 
 function logout(){ localStorage.removeItem("loggedInUser"); location.reload(); }
@@ -244,44 +226,16 @@ dismissAppBtn.addEventListener('click', () => { document.getElementById("appDown
 function refreshPage(){ location.reload(); }
 function exitPage(){ window.close(); }
 
-// PWA Install
-const installBanner = document.getElementById('installBanner');
-const installBtn = document.getElementById('installBtn');
-const dismissBtn = document.getElementById('dismissInstall');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  // Show install banner for mobile devices
-  if(/Mobi|Android/i.test(navigator.userAgent)){
-    installBanner.style.display = 'block';
-  }
-});
-
-installBtn.addEventListener('click', async () => {
-  installBanner.style.display = 'none';
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('User choice:', outcome);
-    deferredPrompt = null;
-  }
-});
-
-dismissBtn.addEventListener('click', () => {
-  installBanner.style.display = 'none';
-});
+// PWA install detection
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
 
 // Auto-login if user already logged in
-if(localStorage.getItem('loggedInUser')){
-  enterApp(localStorage.getItem('loggedInUser'));
-}
+if(localStorage.getItem('loggedInUser')) enterApp(localStorage.getItem('loggedInUser'));
 
 // Service Worker registration
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(() => {
-    console.log('Service Worker registered');
-  }).catch(err => console.error('SW registration failed:', err));
+  navigator.serviceWorker.register('sw.js').then(()=>{ console.log('Service Worker registered'); })
+  .catch(err=>console.error('SW registration failed:', err));
 }
 </script>
 </body>
