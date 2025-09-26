@@ -101,10 +101,11 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Join Telegram group</a>
       <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> Join WhatsApp Channel</a>
 
-      <h3>Media to URL Converter (Catbox)</h3>
-      <input type="file" id="catboxFile" />
-      <button onclick="uploadToCatbox()" style="background:#FF8C00; color:white;">Upload & Get URL</button>
-      <div id="catboxResult" style="margin-top:10px;"></div>
+      <h3>Social Media Downloads</h3>
+      <a href="#" class="button" style="background:#E60023;">Pinterest Download</a>
+      <a href="#" class="button" style="background:#25F4EE; color:black;">TikTok Download</a>
+      <a href="#" class="button" style="background:#C13584;">Instagram Download</a>
+      <a href="#" class="button" style="background:#1877F2;">Facebook Download</a>
 
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
@@ -120,21 +121,22 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
     <!-- Mediafire Download Card -->
     <div class="card" id="mediafireCard">
       <h2>Mediafire File Download</h2>
-      <input type="text" id="fileLink" placeholder="Paste Mediafire link here">
-      <button onclick="downloadFile()" style="background:#FF69B4; color:white;">Download</button>
+      <input type="text" id="fileLink"
+placeholder="Enter Mediafire link">
+      <button onclick="downloadFile()">Get Download Link</button>
       <div id="downloadResult" style="margin-top:10px;"></div>
     </div>
   </div>
 </div>
 
-<!-- App Download Prompt -->
+<!-- App Install Prompt -->
 <div id="appDownloadPrompt">
-  <span>Install Trashcore App for better experience!</span>
-  <button id="downloadAppBtn">Download App</button>
-  <button id="dismissAppBtn">Dismiss</button>
+  <span>Install Trashcore on your device for a better experience!</span>
+  <button id="downloadAppBtn">Install</button>
+  <button id="dismissAppBtn">No Thanks</button>
 </div>
 
-<div class="copyright" style="margin-top:20px;">
+<div class="copyright">
   ©️ 2025 Trashcore Devs
 </div>
 
@@ -248,42 +250,6 @@ function downloadFile(){
   const resultDiv = document.getElementById('downloadResult');
   if(!link){ alert('Enter Mediafire link'); return; }
   resultDiv.innerHTML = `<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
-}
-
-// Catbox Upload & Copy
-async function uploadToCatbox(){
-  const fileInput = document.getElementById('catboxFile');
-  const resultDiv = document.getElementById('catboxResult');
-  if(!fileInput.files.length){ alert('Select a file'); return; }
-  const file = fileInput.files[0];
-  resultDiv.innerHTML = 'Uploading...';
-  const formData = new FormData();
-  formData.append('reqtype','fileupload');
-  formData.append('fileToUpload', file);
-  try{
-    const res = await fetch('https://catbox.moe/user/api.php', {method:'POST', body:formData});
-    const url = await res.text();
-    if(url.startsWith('http')){
-      resultDiv.innerHTML = `
-        <input type="text" value="${url}" id="catboxURL" readonly style="width:80%; padding:5px; border-radius:5px;" />
-        <button onclick="copyCatboxURL()" style="margin-left:5px; padding:5px 10px; background:#32CD32; color:white; border:none; border-radius:5px;">Copy</button>
-      `;
-    } else {
-      resultDiv.innerHTML = `<span style="color:red;">Upload failed: ${url}</span>`;
-    }
-  } catch(err){
-    console.error(err);
-    resultDiv.innerHTML = '<span style="color:red;">Upload failed. Try again.</span>';
-  }
-}
-
-function copyCatboxURL(){
-  const input = document.getElementById('catboxURL');
-  input.select();
-  input.setSelectionRange(0, 99999);
-  navigator.clipboard.writeText(input.value).then(()=>{
-    alert('URL copied to clipboard!');
-  });
 }
 
 // Music Toggle
