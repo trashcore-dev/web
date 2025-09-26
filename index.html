@@ -19,7 +19,7 @@ body:not(.logged-in) { background:linear-gradient(135deg,#FF4D4D 0%,#B3B3B3 100%
 .hidden { display:none; }
 .card-container, .form-container, .card { max-width:95%; margin:10px auto; padding:20px; border-radius:12px; background:#1E90FF; color:#fff; transition:0.3s; }
 body.logged-in .card, body.logged-in .card-container { background:#111; }
-input, button { width:90%; padding:10px; margin:6px 0; border-radius:8px; border:none; }
+input, button, select { width:90%; padding:10px; margin:6px 0; border-radius:8px; border:none; }
 button { font-weight:bold; cursor:pointer; transition:0.3s; }
 button:hover { opacity:0.85; }
 h1 { font-size:1.8em; color:red; margin-bottom:10px; }
@@ -56,7 +56,7 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 .dropdown a { display:block; padding:10px 12px; text-decoration:none; color:#fff; font-size:14px; }
 .dropdown a:hover { background:#222; }
 
-/* In-page app download prompt */
+/* In-page App Download Prompt */
 #appDownloadPrompt { display:none; position:fixed; bottom:80px; left:10px; right:10px; background:#32CD32; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1500; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-weight:bold; }
 #appDownloadPrompt button { margin-left:6px; padding:8px 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
 #downloadAppBtn { background:#fff; color:#32CD32; }
@@ -72,11 +72,34 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 <!-- Sign Up -->
 <div class="form-container" id="signupForm">
   <h1>Sign Up</h1>
+  
+  <!-- Username, Email, Password -->
   <input type="text" id="signupUsername" placeholder="Username (3-15 chars)">
   <input type="email" id="signupEmail" placeholder="Email">
   <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
-  <button onclick="signup()">Create Account</button>
-  <button class="toggle-form" onclick="showLogin()">Already have an account? Login</button>
+  
+  <!-- Country & Phone -->
+  <select id="signupCountry">
+    <option value="">Select Country</option>
+    <option value="KE">Kenya</option>
+    <option value="US">United States</option>
+    <option value="GB">United Kingdom</option>
+    <option value="NG">Nigeria</option>
+    <option value="ZA">South Africa</option>
+  </select>
+  <input type="text" id="signupPhone" placeholder="Phone Number">
+  <button id="sendCodeBtn" style="background:#FFA500; color:white;">Send Verification Code</button>
+  
+  <!-- Verification Code -->
+  <input type="text" id="verificationCode" placeholder="Enter Code" class="hidden">
+  <button id="verifyCodeBtn" class="hidden" style="background:#32CD32; color:white;">Verify Code</button>
+
+  <!-- Sign Up Button -->
+  <button id="createAccountBtn" style="background:#32CD32; color:white;" onclick="signupWithPhone()">Create Account</button>
+  
+  <button class="toggle-form" id="alreadyAccountBtn" style="background:#FFA500; color:white;" onclick="showLogin()">Already have an account? Login</button>
+  
+  <div style="margin-top:10px; color:black;">©️ 2025 Trashcore Devs</div>
 </div>
 
 <!-- Login -->
@@ -136,7 +159,7 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
   </div>
 </div>
 
-<!-- In-page App Download Prompt -->
+<!-- App Download Prompt -->
 <div id="appDownloadPrompt">
   📲 Install Trashcore App for full experience!
   <button id="downloadAppBtn">Download</button>
@@ -147,22 +170,46 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 // Users
 let users = JSON.parse(localStorage.getItem("users")) || [];
 let deferredPrompt;
+let generatedCode = "";
 
-// Signup/Login
+// Show/Hide forms
 function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
 function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
 
-function signup(){
-  const u=document.getElementById("signupUsername").value.trim();
-  const e=document.getElementById("signupEmail").value.trim();
-  const p=document.getElementById("signupPassword").value.trim();
-  if(!/^[a-zA-Z0-9_]{3,15}$/.test(u)) return alert("Invalid username!");
-  if(p.length<6) return alert("Password too short!");
-  if(users.find(x=>x.username===u)) return alert("User exists!");
-  users.push({username:u,email:e,password:p});
+// Signup with phone verification
+document.getElementById("sendCodeBtn").addEventListener("click", () => {
+  const country = document.getElementById("signupCountry").value;
+  const phone = document.getElementById("signupPhone").value.trim();
+  if(!country || !phone) return alert("Select country and enter phone number");
+  generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+  alert(`Verification code sent to ${phone} (Simulated): ${generatedCode}`);
+  document.getElementById("verificationCode").classList.remove("hidden");
+  document.getElementById("verifyCodeBtn").classList.remove("hidden");
+});
+
+document.getElementById("verifyCodeBtn").addEventListener("click", () => {
+  const codeInput = document.getElementById("verificationCode").value.trim();
+  if(codeInput === generatedCode){
+    alert("Phone verified! Now click Create Account.");
+  } else { alert("Incorrect code."); }
+});
+
+function signupWithPhone(){
+  const username = document.getElementById("signupUsername").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const password = document.getElementById("signupPassword").value;
+  const phone = document.getElementById("signupPhone").value.trim();
+  const country = document.getElementById("signupCountry").value;
+  if(!username || !email || !password || !phone || !country) return alert("Fill all fields!");
+  if(!/^[a-zA-Z0-9_]{3,15}$/.test(username)) return alert("Invalid username!");
+  if(password.length<6) return alert("Password too short!");
+  if(document.getElementById("verificationCode").value.trim()!==generatedCode) return alert("Phone not verified!");
+  if(users.find(u => u.username===username)) return alert("Username exists!");
+  users.push({username,email,password,phone,country});
   localStorage.setItem("users",JSON.stringify(users));
-  alert("Account created! Login.");
-  showLogin();
+  localStorage.setItem("loggedInUser",username);
+  alert("Account created and phone verified!");
+  enterApp(username);
 }
 
 function login(){
@@ -174,69 +221,96 @@ function login(){
 }
 
 function enterApp(u){
-  localStorage.setItem("loggedInUser",u);
   document.body.classList.add("logged-in");
   document.getElementById("signupForm").classList.add("hidden");
-  document.getElementById("loginForm").classList.add("hidden");
+  document.getElementById("loginForm").
+classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
-  document.getElementById("menu").style.display="block";
-  document.getElementById("appDownloadPrompt").style.display="block"; // show green prompt
+  document.getElementById("menu").style.display = "block";
+
+  // Play background music
+  const music = document.getElementById("bgMusic");
+  if(music) music.play().catch(e => console.log("Autoplay blocked:", e));
+
+  // Show app download prompt
+  setTimeout(()=>{ document.getElementById("appDownloadPrompt").style.display="block"; }, 3000);
 }
 
-function logout(){ localStorage.removeItem("loggedInUser"); location.reload(); }
-
-// Menu
-const menuBtn=document.getElementById("menuBtn");
-const dropdown=document.getElementById("dropdownMenu");
-menuBtn.addEventListener("click",()=>{ menuBtn.classList.toggle("open"); dropdown.classList.toggle("show"); });
-window.addEventListener("click",e=>{ if(!e.target.closest(".menu")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); }});
-
-// Music
-const music=document.getElementById("bgMusic");
-document.getElementById("musicBtn").addEventListener("click",()=>{ if(music.muted){ music.muted=false; music.play(); } else music.pause(); });
-
-// Music search
-async function searchSong(){
-  const q=document.getElementById("songQuery").value.trim();
-  if(!q) return alert("Enter song");
-  const resDiv=document.getElementById("songResults");
-  resDiv.innerHTML="Searching...";
-  try{ const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&limit=5`);
-    const data=await res.json(); resDiv.innerHTML=""; data.results.forEach(s=>{ const p=document.createElement("p"); p.innerHTML=`${s.trackName} - ${s.artistName} <a href="${s.previewUrl}" target="_blank">Preview</a>`; resDiv.appendChild(p); });
-  }catch{ resDiv.innerHTML="Error fetching songs"; }
+function logout(){
+  localStorage.removeItem("loggedInUser");
+  document.body.classList.remove("logged-in");
+  document.getElementById("mainContent").classList.add("hidden");
+  document.getElementById("menu").style.display="none";
+  showLogin();
 }
 
-// File Download
-function downloadFile(){ 
-  const link=document.getElementById("fileLink").value.trim(); 
-  const out=document.getElementById("downloadResult"); 
-  if(!link||!link.includes("mediafire.com")){ out.innerHTML="Invalid link"; return; }
-  out.innerHTML=`<a href="${link}" target="_blank" style="color:yellow;font-weight:bold;">Click to download</a>`;
-}
-
-// App Download Prompt
-const downloadAppBtn = document.getElementById('downloadAppBtn');
-const dismissAppBtn = document.getElementById('dismissAppBtn');
-downloadAppBtn.addEventListener('click', async () => {
-  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; document.getElementById("appDownloadPrompt").style.display="none"; }
+// Hamburger menu
+const menuBtn = document.getElementById("menuBtn");
+const dropdown = document.getElementById("dropdownMenu");
+menuBtn.addEventListener("click", ()=>{
+  dropdown.classList.toggle("show");
+  menuBtn.classList.toggle("open");
 });
-dismissAppBtn.addEventListener('click', () => { document.getElementById("appDownloadPrompt").style.display="none"; });
+window.addEventListener("click", e=>{
+  if(!e.target.closest(".menu-btn")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); }
+});
 
-// Utils
+// Music toggle
+document.getElementById("musicBtn").addEventListener("click", ()=>{
+  const music = document.getElementById("bgMusic");
+  if(music.muted){ music.muted=false; music.play(); } else { music.pause(); }
+});
+
+// Refresh & Exit
 function refreshPage(){ location.reload(); }
-function exitPage(){ window.close(); }
+function exitPage(){ if(confirm("Exit page?")){ window.open('','_self'); window.close(); } }
 
-// PWA install detection
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
-
-// Auto-login if user already logged in
-if(localStorage.getItem('loggedInUser')) enterApp(localStorage.getItem('loggedInUser'));
-
-// Service Worker registration
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=>{ console.log('Service Worker registered'); })
-  .catch(err=>console.error('SW registration failed:', err));
+// Music Search
+async function searchSong(){
+  const query=document.getElementById("songQuery").value.trim();
+  if(!query) return alert("Enter song name");
+  const resultsDiv=document.getElementById("songResults");
+  resultsDiv.innerHTML="<p>Searching...</p>";
+  try{
+    const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
+    const data=await res.json();
+    resultsDiv.innerHTML="";
+    if(data.results.length===0){ resultsDiv.innerHTML="<p>No results found</p>"; return; }
+    const ul=document.createElement("ul");
+    data.results.forEach(s=>{
+      const li=document.createElement("li");
+      li.innerHTML=`${s.trackName} - ${s.artistName} <a href="${s.previewUrl}" target="_blank" download>[Preview]</a>`;
+      ul.appendChild(li);
+    });
+    resultsDiv.appendChild(ul);
+  } catch(err){ resultsDiv.innerHTML="<p>Error fetching songs</p>"; console.error(err);}
 }
+
+// Mediafire download
+function downloadFile(){
+  const link=document.getElementById("fileLink").value.trim();
+  if(!link) return alert("Enter Mediafire link");
+  document.getElementById("downloadResult").innerHTML=`<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
+}
+
+// App download prompt buttons
+document.getElementById("downloadAppBtn").addEventListener("click", ()=>{
+  alert("Redirecting to app download page..."); 
+  document.getElementById("appDownloadPrompt").style.display="none";
+});
+document.getElementById("dismissAppBtn").addEventListener("click", ()=>{
+  document.getElementById("appDownloadPrompt").style.display="none";
+});
+
+// Check auto-login
+const loggedUser=localStorage.getItem("loggedInUser");
+if(loggedUser) enterApp(loggedUser);
+
+// PWA Install
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+});
 </script>
 </body>
 </html>
