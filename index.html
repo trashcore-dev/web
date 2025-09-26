@@ -101,6 +101,10 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <a href="http://t.me/Traschoreultra_bot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 2</a>
       <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Join Telegram group</a>
       <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> Join WhatsApp Channel</a>
+      <h3>Media to URL Converter (Catbox)</h3>
+      <input type="file" id="catboxFile" />
+      <button onclick="uploadToCatbox()" style="background:#FF8C00; color:white;">Upload & Get URL</button>
+      <div id="catboxResult" style="margin-top:10px;"></div>
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
@@ -126,29 +130,43 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 <div id="appDownloadPrompt">
   <span>Install Trashcore App for better experience!</span>
   <button id="downloadAppBtn">Download App</button>
-  <button id="dismissAppBtn">Dismiss</button>
+  <
+<button id="dismissAppBtn">Dismiss</button>
+</div>
+
+<div class="copyright" style="margin-top:20px;">
+  ©️ 2025 Trashcore Devs
 </div>
 
 <script>
 // Users & Auth
 let users = JSON.parse(localStorage.getItem('users')) || [];
-if(localStorage.getItem('loggedInUser')) enterApp(localStorage.getItem('loggedInUser'));
 
-function showLoginForm(){ document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); }
-function showSignupForm(){ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); }
+if(localStorage.getItem('loggedInUser')){
+  document.body.classList.add('logged-in');
+  enterApp(localStorage.getItem('loggedInUser'));
+}
 
 function isValidUsername(name){ return /^[a-zA-Z0-9_]{3,15}$/.test(name); }
 function isValidPassword(pw){ return pw.length >= 6; }
 
+function showLoginForm(){
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('loginForm').classList.remove('hidden');
+}
+function showSignupForm(){
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('signupForm').classList.remove('hidden');
+}
+
 function signup(){
   const username = document.getElementById('signupUsername').value.trim();
-  const email =
-document.getElementById('signupEmail').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
   const password = document.getElementById('signupPassword').value;
   if(!username || !email || !password){ alert('Fill all fields'); return; }
   if(!isValidUsername(username)){ alert('Invalid username'); return; }
   if(!isValidPassword(password)){ alert('Password min 6 chars'); return; }
-  if(users.find(u=>u.username===username)){ alert('Username already exists'); return; }
+  if(users.find(u=>u.username===username)){ alert('Username exists'); return; }
   users.push({username,email,password});
   localStorage.setItem('users', JSON.stringify(users));
   alert('Account created! Please login.');
@@ -163,9 +181,7 @@ function login(){
   if(user){
     localStorage.setItem('loggedInUser', username);
     enterApp(username);
-  } else {
-    alert('Invalid credentials.');
-  }
+  } else { alert('Invalid credentials'); }
 }
 
 function logout(){
@@ -233,30 +249,62 @@ function downloadFile(){
   resultDiv.innerHTML = `<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
 }
 
-// App Download Prompt
-document.getElementById("downloadAppBtn").addEventListener("click", ()=>{
-  window.open("https://example.com/trashcore-app.apk","_blank");
-});
-document.getElementById("dismissAppBtn").addEventListener("click", ()=>{
-  document.getElementById("appDownloadPrompt").style.display="none";
-});
+// Catbox Upload
+async function uploadToCatbox(){
+  const fileInput = document.getElementById('catboxFile');
+  const resultDiv = document.getElementById('catboxResult');
+  if(!fileInput.files.length){ alert('Select a file to upload'); return; }
+  const file = fileInput.files[0];
+  resultDiv.innerHTML = "Uploading...";
+  
+  const formData = new FormData();
+  formData.append('reqtype', 'fileupload');
+  formData.append('fileToUpload', file);
+
+  try{
+    const res = await fetch('https://catbox.moe/user/api.php', { method:'POST', body:formData });
+    const url = await res.text();
+    resultDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#32CD32;">${url}</a>`;
+  }catch(err){
+    console.error(err);
+    resultDiv.innerHTML = "<span style='color:red;'>Upload failed. Try again.</span>";
+  }
+}
 
 // Background Music Toggle
 const musicBtn = document.getElementById('musicBtn');
+const music = document.getElementById('bgMusic');
 musicBtn.addEventListener('click', ()=>{
-  if(music.muted){
-    music.muted=false;
-    music.play();
-    musicBtn.textContent='🔊 Music Playing';
-  }else{
-    music.pause();
-    musicBtn.textContent='🔇 Music Paused';
-  }
+  if(music.muted){ music.muted=false; music.play(); musicBtn.textContent='🔊 Music Playing'; }
+  else{ music.pause(); musicBtn.textContent='🔇 Music Paused'; }
 });
 
-// Refresh & Exit Functions
+// Refresh & Exit
 function refreshPage(){ location.reload(); }
-function exitPage(){ if(confirm("Are you sure you want to exit?")){ window.open('', '_self'); window.close(); } }
+function exitPage(){ if(confirm("Are you sure you want to exit?")){ window.open('','_self'); window.close(); } }
+
+// App Install Prompt
+let deferredPrompt;
+const appPrompt = document.getElementById('appDownloadPrompt');
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  if(!localStorage.getItem('appPromptDismissed')) appPrompt.style.display="block";
+});
+
+document.getElementById("downloadAppBtn").addEventListener("click", async ()=>{
+  appPrompt.style.display="none";
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User choice:', outcome);
+    deferredPrompt = null;
+  }
+});
+document.getElementById("dismissAppBtn").addEventListener("click", ()=>{
+  appPrompt.style.display="none";
+  localStorage.setItem('appPromptDismissed','true');
+});
 
 // Service Worker
 if('serviceWorker' in navigator){
