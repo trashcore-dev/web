@@ -92,6 +92,7 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 <div class="card-container hidden" id="mainContent">
   <h1 class="page-title">TRASHCORE SITE</h1>
   <div class="card-row">
+
     <!-- Services Card -->
     <div class="card">
       <a href="https://t.me/YourBotUsername"><img src="https://files.catbox.moe/7x996w.jpg" alt="Logo" class="logo"></a>
@@ -102,10 +103,12 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> Join WhatsApp Channel</a>
 
       <h3>Social Media Downloads</h3>
-      <a href="#" class="button" style="background:#E60023;">Pinterest Download</a>
-      <a href="#" class="button" style="background:#25F4EE; color:black;">TikTok Download</a>
-      <a href="#" class="button" style="background:#C13584;">Instagram Download</a>
-      <a href="#" class="button" style="background:#1877F2;">Facebook Download</a>
+      <a href="#" class="button" style="background:#E60023;" onclick="socialDownload('Pinterest')">Pinterest Download</a>
+      <a href="#" class="button" style="background:#25F4EE; color:black;" onclick="socialDownload('TikTok')">TikTok Download</a>
+      <a href="#" class="button" style="background:#C13584;" onclick="socialDownload('Instagram')">Instagram Download</a>
+      <a href="#" class="button" style="background:#1877F2;" onclick="socialDownload('Facebook
+Download</a>
+      <div id="socialDownloadResult" style="margin-top:10px;"></div>
 
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
@@ -120,12 +123,12 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 
     <!-- Mediafire Download Card -->
     <div class="card" id="mediafireCard">
-      <h2>Mediafire File Download</h2>
-      <input type="text" id="fileLink"
-placeholder="Enter Mediafire link">
+      <h2>Mediafire Download</h2>
+      <input type="text" id="fileLink" placeholder="Enter Mediafire link">
       <button onclick="downloadFile()">Get Download Link</button>
       <div id="downloadResult" style="margin-top:10px;"></div>
     </div>
+
   </div>
 </div>
 
@@ -249,7 +252,20 @@ function downloadFile(){
   const link = document.getElementById('fileLink').value.trim();
   const resultDiv = document.getElementById('downloadResult');
   if(!link){ alert('Enter Mediafire link'); return; }
-  resultDiv.innerHTML = `<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
+  resultDiv.innerHTML = `<a href="${link}" download class="button" style="background:#FF69B4;">Click here to download to your phone</a>`;
+}
+
+// Social Media Downloads
+function socialDownload(platform) {
+  const link = prompt(`Enter the ${platform} video/photo link to download:`);
+  const resultDiv = document.getElementById('socialDownloadResult');
+  if(!link) return alert('No link provided.');
+  const fileName = platform + "_download";
+  const downloadURL = link; // Replace with actual API URL for real downloads
+  resultDiv.innerHTML = `
+    <p>${platform} Download Ready:</p>
+    <a href="${downloadURL}" download="${fileName}" class="button" style="background:#32CD32;">Click here to download to your phone</a>
+  `;
 }
 
 // Music Toggle
