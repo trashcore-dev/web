@@ -14,44 +14,47 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
-/* === General Styles === */
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; text-align: center; transition: background 0.5s ease; }
+body { font-family: Arial, sans-serif; margin:0; padding:0; text-align:center; transition: background 0.5s ease; }
 body.logged-in { background: #000; color: white; }
 body:not(.logged-in) { background: linear-gradient(135deg, #FF4D4D 0%, #B3B3B3 100%); color: white; }
-.hidden { display: none; }
+.hidden { display:none; }
 
-/* === Cards & Forms === */
+/* Cards & Forms */
 .form-container, .card-container, .card {
-  background: #1E90FF; padding: 30px; border-radius: 16px; margin: 10px auto; max-width: 450px; color: white;
+  background: #1E90FF; padding: 30px; border-radius: 16px; margin: 10px auto; max-width:450px; color:white; transition:0.3s;
 }
-body.logged-in .card, body.logged-in .card-container { background: #111; }
-input, button { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; }
-button { background-color: #32CD32; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
-button:hover { background-color: #28a428; }
-.toggle-form { background: none; color: yellow; border: none; cursor: pointer; text-decoration: underline; }
+body.logged-in .card, body.logged-in .card-container { background:#111; }
+input, button { width:90%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
+button { background:#32CD32; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
+button:hover { background:#28a428; }
+.toggle-form { background:none; color:yellow; border:none; cursor:pointer; text-decoration:underline; }
+h1 { color:red; }
+.logo { width:100px; height:100px; border-radius:50%; margin-bottom:20px; }
 
-/* === Logo / Titles === */
-h1 { color: red; }
-.logo { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px; }
+/* Buttons */
+.button { display:flex; justify-content:center; align-items:center; gap:10px; width:100%; margin:12px 0; padding:15px; font-size:18px; font-weight:bold; color:white; text-decoration:none; border-radius:12px; cursor:pointer; }
+.telegram { background: linear-gradient(90deg,#00BFFF,#1E90FF); }
+.whatsapp { background: linear-gradient(90deg,#32CD32,#00FF7F); }
+.logout-btn { background:#FF4500; margin-top:15px; }
+.logout-btn:hover { background:#e03e00; }
 
-/* === Buttons === */
-.button { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; margin: 12px 0; padding: 15px; font-size: 18px; font-weight: bold; color: white; text-decoration: none; border-radius: 12px; background-size: 200% 200%; cursor: pointer; }
-.telegram { background: linear-gradient(90deg, #00BFFF, #1E90FF); }
-.whatsapp { background: linear-gradient(90deg, #32CD32, #00FF7F); }
-.logout-btn { background-color: #FF4500; margin-top: 15px; }
-.logout-btn:hover { background-color: #e03e00; }
-
-/* === Menu === */
-.menu { position: absolute; top: 20px; right: 20px; display: none; }
-.menu-btn { background: rgba(255,255,255,0.8); border: none; padding: 10px 15px; border-radius: 50px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+/* Menu */
+.menu { position:absolute; top:20px; right:20px; display:none; }
+.menu-btn { background: rgba(255,255,255,0.8); border:none; padding:10px 15px; border-radius:50px; font-size:16px; cursor:pointer; display:flex; align-items:center; gap:5px; }
 .menu-btn.open i { transform: rotate(90deg); }
-.dropdown { position: absolute; top: 55px; right: 0; background: #000; color: #fff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); overflow: hidden; min-width: 180px; max-height: 0; opacity: 0; transform: translateY(-10px); transition: all 0.3s; }
-.dropdown.show { max-height: 500px; opacity: 1; transform: translateY(0); }
-.dropdown a { display: block; padding: 12px; text-decoration: none; color: #fff; }
-.dropdown a:hover { background: #222; }
+.dropdown { position:absolute; top:55px; right:0; background:#000; color:#fff; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.5); overflow:hidden; min-width:180px; max-height:0; opacity:0; transform:translateY(-10px); transition:all 0.3s; }
+.dropdown.show { max-height:500px; opacity:1; transform:translateY(0); }
+.dropdown a { display:block; padding:12px; text-decoration:none; color:#fff; }
+.dropdown a:hover { background:#222; }
 
-/* === Chat === */
-.chat-messages { background: #222; padding: 10px; height: 200px; overflow-y: auto; margin: 10px 0; text-align: left; border-radius: 8px; }
+/* Chat */
+.chat-messages { background:#222; padding:10px; height:200px; overflow-y:auto; margin:10px 0; text-align:left; border-radius:8px; }
+
+/* Install Banner */
+#installBanner { display:none; position:fixed; bottom:20px; left:10px; right:10px; background:#1E90FF; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1000; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+#installBanner button { margin-left:10px; padding:10px 15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:white; }
+#installBtn { background:#32CD32; }
+#dismissInstall { background:#FF4500; }
 </style>
 </head>
 <body>
@@ -96,7 +99,7 @@ h1 { color: red; }
   </div>
 </div>
 
-<!-- Main -->
+<!-- Main Content -->
 <div class="card-container hidden" id="mainContent">
   <h1>TRASHCORE SITE</h1>
 
@@ -136,8 +139,15 @@ h1 { color: red; }
   </div>
 </div>
 
+<!-- Install Banner -->
+<div id="installBanner">
+  <span>Install Trashcore on your device for a better experience!</span>
+  <button id="installBtn">Install</button>
+  <button id="dismissInstall">No Thanks</button>
+</div>
+
 <script>
-// === User Data ===
+// === Users ===
 let users = JSON.parse(localStorage.getItem("users")) || [];
 let publicMessages = JSON.parse(localStorage.getItem("publicMessages")) || [];
 
@@ -176,16 +186,9 @@ function enterApp(username){
   showPublicMessages();
 }
 
-function logout(){
-  localStorage.removeItem("loggedInUser");
-  document.body.classList.remove("logged-in");
-  document.getElementById("mainContent").classList.add("hidden");
-  document.getElementById("menu").style.display="none";
-  showLogin();
-}
-
 // Restore session
 if(localStorage.getItem("loggedInUser")){ enterApp(localStorage.getItem("loggedInUser")); }
+function logout(){ localStorage.removeItem("loggedInUser"); location.reload(); }
 
 // === Menu ===
 const menuBtn=document.getElementById("menuBtn");
@@ -233,7 +236,7 @@ function showPublicMessages(){
   box.scrollTop=box.scrollHeight;
 }
 
-// === File Downloads ===
+// === File Download ===
 function downloadFile(){
   const link=document.getElementById("fileLink").value.trim();
   const out=document.getElementById("downloadResult");
@@ -253,9 +256,32 @@ musicBtn.addEventListener("click",()=>{
 function refreshPage(){ location.reload(); }
 function exitPage(){ window.close(); }
 
-// === Register Service Worker (PWA) ===
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("service-worker.js").then(()=>console.log("Service Worker Registered"));
+// === PWA Install ===
+let deferredPrompt;
+const installBanner=document.getElementById("installBanner");
+const installBtn=document.getElementById("installBtn");
+const dismissBtn=document.getElementById("dismissInstall");
+
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  installBanner.style.display="block";
+});
+
+installBtn.addEventListener("click",async()=>{
+  installBanner.style.display="none";
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const choice=await deferredPrompt.userChoice;
+    console.log("User choice:", choice.outcome);
+    deferredPrompt=null;
+  }
+});
+dismissBtn.addEventListener("click",()=>{ installBanner.style.display="none"; });
+
+// === Service Worker ===
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js').then(()=>console.log("Service Worker registered"));
 }
 </script>
 </body>
