@@ -5,13 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trashcore Service</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- PWA Manifest -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E90FF">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <style>
+/* === General Styles === */
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; text-align: center; transition: background 0.5s ease; }
 body.logged-in { background: #000; color: white; }
 body:not(.logged-in) { background: linear-gradient(135deg, #FF4D4D 0%, #B3B3B3 100%); color: white; }
 .hidden { display: none; }
+
+/* === Cards & Forms === */
 .form-container, .card-container, .card {
   background: #1E90FF; padding: 30px; border-radius: 16px; margin: 10px auto; max-width: 450px; color: white;
 }
@@ -20,13 +29,19 @@ input, button { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; bo
 button { background-color: #32CD32; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
 button:hover { background-color: #28a428; }
 .toggle-form { background: none; color: yellow; border: none; cursor: pointer; text-decoration: underline; }
+
+/* === Logo / Titles === */
 h1 { color: red; }
 .logo { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px; }
+
+/* === Buttons === */
 .button { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; margin: 12px 0; padding: 15px; font-size: 18px; font-weight: bold; color: white; text-decoration: none; border-radius: 12px; background-size: 200% 200%; cursor: pointer; }
 .telegram { background: linear-gradient(90deg, #00BFFF, #1E90FF); }
 .whatsapp { background: linear-gradient(90deg, #32CD32, #00FF7F); }
 .logout-btn { background-color: #FF4500; margin-top: 15px; }
 .logout-btn:hover { background-color: #e03e00; }
+
+/* === Menu === */
 .menu { position: absolute; top: 20px; right: 20px; display: none; }
 .menu-btn { background: rgba(255,255,255,0.8); border: none; padding: 10px 15px; border-radius: 50px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
 .menu-btn.open i { transform: rotate(90deg); }
@@ -34,6 +49,8 @@ h1 { color: red; }
 .dropdown.show { max-height: 500px; opacity: 1; transform: translateY(0); }
 .dropdown a { display: block; padding: 12px; text-decoration: none; color: #fff; }
 .dropdown a:hover { background: #222; }
+
+/* === Chat === */
 .chat-messages { background: #222; padding: 10px; height: 200px; overflow-y: auto; margin: 10px 0; text-align: left; border-radius: 8px; }
 </style>
 </head>
@@ -120,10 +137,11 @@ h1 { color: red; }
 </div>
 
 <script>
+// === User Data ===
 let users = JSON.parse(localStorage.getItem("users")) || [];
 let publicMessages = JSON.parse(localStorage.getItem("publicMessages")) || [];
 
-// Forms
+// === Signup/Login ===
 function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
 function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
 
@@ -169,13 +187,13 @@ function logout(){
 // Restore session
 if(localStorage.getItem("loggedInUser")){ enterApp(localStorage.getItem("loggedInUser")); }
 
-// Menu
+// === Menu ===
 const menuBtn=document.getElementById("menuBtn");
 const dropdown=document.getElementById("dropdownMenu");
 menuBtn.addEventListener("click",()=>{ menuBtn.classList.toggle("open"); dropdown.classList.toggle("show"); });
 window.addEventListener("click",e=>{ if(!e.target.closest(".menu")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); }});
 
-// Music search
+// === Music Search ===
 async function searchSong(){
   const query=document.getElementById("songQuery").value.trim();
   if(!query){ alert("Enter a song name"); return; }
@@ -194,7 +212,7 @@ async function searchSong(){
   }catch{ resultsDiv.innerHTML="Error fetching songs."; }
 }
 
-// Chat
+// === Chat ===
 function sendPublicMessage(){
   const text=document.getElementById("publicInput").value.trim();
   if(!text) return;
@@ -215,7 +233,7 @@ function showPublicMessages(){
   box.scrollTop=box.scrollHeight;
 }
 
-// File downloads
+// === File Downloads ===
 function downloadFile(){
   const link=document.getElementById("fileLink").value.trim();
   const out=document.getElementById("downloadResult");
@@ -223,7 +241,7 @@ function downloadFile(){
   out.innerHTML=`<a href="${link}" target="_blank" style="color:yellow;font-weight:bold;">Click here to download</a>`;
 }
 
-// Music toggle
+// === Music Toggle ===
 const music=document.getElementById("bgMusic");
 const musicBtn=document.getElementById("musicBtn");
 musicBtn.addEventListener("click",()=>{
@@ -231,9 +249,14 @@ musicBtn.addEventListener("click",()=>{
   else{ music.pause(); musicBtn.textContent="🔇 Music Paused"; }
 });
 
-// Utils
+// === Utils ===
 function refreshPage(){ location.reload(); }
 function exitPage(){ window.close(); }
+
+// === Register Service Worker (PWA) ===
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("service-worker.js").then(()=>console.log("Service Worker Registered"));
+}
 </script>
 </body>
 </html>
