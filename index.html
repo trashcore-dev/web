@@ -64,6 +64,12 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 #installBanner button { margin-left:6px; padding:8px 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; color:white; }
 #installBtn { background:#32CD32; }
 #dismissInstall { background:#FF4500; }
+
+/* In-page app download prompt */
+#appDownloadPrompt { display:none; position:fixed; bottom:80px; left:10px; right:10px; background:#32CD32; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1500; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-weight:bold; }
+#appDownloadPrompt button { margin-left:6px; padding:8px 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
+#downloadAppBtn { background:#fff; color:#32CD32; }
+#dismissAppBtn { background:#FF4500; color:white; }
 </style>
 </head>
 <body>
@@ -71,9 +77,6 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 <!-- Background Music -->
 <audio id="bgMusic" src="https://files.catbox.moe/dqlb0t.mp3" muted autoplay loop></audio>
 <button id="musicBtn" style="position:fixed; bottom:15px; right:15px; padding:10px 15px; border:none; border-radius:8px; background:#32CD32; color:#fff; font-weight:bold; cursor:pointer; z-index:1000;">🔊 Music</button>
-
-<!-- Floating Install App Button -->
-<button id="installAppBtn" style="position:fixed; top:15px; right:15px; z-index:2000; background:#32CD32; color:white; border:none; border-radius:8px; padding:10px 14px; font-weight:bold; cursor:pointer; display:none;">📲 Install App</button>
 
 <!-- Sign Up -->
 <div class="form-container" id="signupForm">
@@ -142,6 +145,13 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
   </div>
 </div>
 
+<!-- In-page App Download Prompt -->
+<div id="appDownloadPrompt">
+  📲 Install Trashcore App for full experience!
+  <button id="downloadAppBtn">Download</button>
+  <button id="dismissAppBtn">No Thanks</button>
+</div>
+
 <!-- Install Banner -->
 <div id="installBanner">
   <span>Install Trashcore for better experience!</span>
@@ -152,6 +162,7 @@ h1 { font-size:1.8em; color:red; margin-bottom:10px; }
 <script>
 // Users
 let users = JSON.parse(localStorage.getItem("users")) || [];
+let deferredPrompt;
 
 // Signup/Login
 function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
@@ -185,8 +196,11 @@ function enterApp(u){
   document.getElementById("loginForm").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("menu").style.display="block";
+
+  // Show in-page download prompt
+  document.getElementById("appDownloadPrompt").style.display="block";
 }
-if(localStorage.getItem("loggedInUser")){ enterApp(localStorage.getItem("loggedInUser")); }
+
 function logout(){ localStorage.removeItem("loggedInUser"); location.reload(); }
 
 // Menu
@@ -218,41 +232,57 @@ function downloadFile(){
   out.innerHTML=`<a href="${link}" target="_blank" style="color:yellow;font-weight:bold;">Click to download</a>`;
 }
 
+// App Download Prompt
+const downloadAppBtn = document.getElementById('downloadAppBtn');
+const dismissAppBtn = document.getElementById('dismissAppBtn');
+downloadAppBtn.addEventListener('click', async () => {
+  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; document.getElementById("appDownloadPrompt").style.display="none"; }
+});
+dismissAppBtn.addEventListener('click', () => { document.getElementById("appDownloadPrompt").style.display="none"; });
+
 // Utils
 function refreshPage(){ location.reload(); }
 function exitPage(){ window.close(); }
 
 // PWA Install
-let deferredPrompt;
-const installBanner=document.getElementById("installBanner");
-const installBtn=document.getElementById("installBtn");
-const dismissBtn=document.getElementById("dismissInstall");
-const installAppBtn=document.getElementById("installAppBtn");
+const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+const dismissBtn = document.getElementById('dismissInstall');
 
-window.addEventListener("beforeinstallprompt",(e)=>{ 
-  e.preventDefault(); 
-  deferredPrompt=e; 
-  installBanner.style.display="block"; 
-  installAppBtn.style.display="block";
-});
-
-installBtn.addEventListener("click",async()=>{ 
-  installBanner.style.display="none"; 
-  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; installAppBtn.style.display="none"; }
-});
-dismissBtn.addEventListener("click",()=>{ installBanner.style.display="none"; installAppBtn.style.display="none"; });
-
-installAppBtn.addEventListener("click", async () => {
-  if(deferredPrompt){ 
-    deferredPrompt.prompt(); 
-    deferredPrompt=null; 
-    installAppBtn.style.display="none"; 
-    installBanner.style.display="none"; 
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner for mobile devices
+  if(/Mobi|Android/i.test(navigator.userAgent)){
+    installBanner.style.display = 'block';
   }
 });
 
-// Service Worker
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').then(()=>console.log("SW registered")); }
+installBtn.addEventListener('click', async () => {
+  installBanner.style.display = 'none';
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User choice:', outcome);
+    deferredPrompt = null;
+  }
+});
+
+dismissBtn.addEventListener('click', () => {
+  installBanner.style.display = 'none';
+});
+
+// Auto-login if user already logged in
+if(localStorage.getItem('loggedInUser')){
+  enterApp(localStorage.getItem('loggedInUser'));
+}
+
+// Service Worker registration
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(() => {
+    console.log('Service Worker registered');
+  }).catch(err => console.error('SW registration failed:', err));
+}
 </script>
 </body>
 </html>
