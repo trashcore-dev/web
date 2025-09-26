@@ -3,19 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trashcore Service</title>
+<title>Trashcore Sign Up</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E90FF">
 <style>
-body { font-family: Arial,sans-serif; margin:0; padding:0; text-align:center; transition: background 0.5s ease; }
-body.logged-in { background:#000; color:white; }
-body:not(.logged-in) { background:linear-gradient(135deg,#FF4D4D 0%,#B3B3B3 100%); color:white; }
+body { font-family: Arial, sans-serif; margin:0; padding:0; text-align:center; background:linear-gradient(135deg,#FF4D4D 0%,#B3B3B3 100%); color:white; }
 .hidden { display:none; }
 
 /* Forms */
-.form-container { background:#1E90FF; padding:30px; border-radius:16px; margin:50px auto; max-width:450px; color:white; transition:background 0.3s; box-shadow:0 4px 15px rgba(0,0,0,0.3); position:relative; z-index:1; }
-input, button { width:90%; padding:12px; margin:8px 0; border-radius:8px; border:none; font-size:16px; }
+.form-container { background:#1E90FF; padding:40px; border-radius:16px; margin:100px auto; max-width:400px; color:white; box-shadow:0 4px 15px rgba(0,0,0,0.3); }
+input, button { width:90%; padding:12px; margin:10px 0; border-radius:8px; border:none; font-size:16px; }
 button.create { background-color:#32CD32; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
 button.create:hover { background-color:#28a428; }
 button.login-toggle { background-color:orange; color:white; font-weight:bold; cursor:pointer; text-decoration:underline; transition:0.3s; }
@@ -47,10 +44,6 @@ body.logged-in .card { background:#111; }
 </style>
 </head>
 <body>
-
-<!-- Auto-playing Music -->
-<audio id="bgMusic" src="https://files.catbox.moe/dqlb0t.mp3" muted autoplay loop></audio>
-<button id="musicBtn">🔊 Play Music</button>
 
 <!-- Sign Up Form -->
 <div class="form-container" id="signupForm">
@@ -107,21 +100,14 @@ body.logged-in .card { background:#111; }
   </div>
 
   <button onclick="logout()" style="margin-top:15px; background:orange; color:white; padding:10px 15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
-    Back to Sign Up
+    Logout
   </button>
-</div>
-
-<!-- PWA Install Banner -->
-<div id="installBanner">
-  <span>Install Trashcore on your device for a better experience!</span>
-  <button id="installBtn">Install</button>
-  <button id="dismissInstall">No Thanks</button>
 </div>
 
 <script>
 // Users & Auth
 let users = JSON.parse(localStorage.getItem('users')) || [];
-if(localStorage.getItem('loggedInUser')){ document.body.classList.add('logged-in'); showMainContent(); }
+if(localStorage.getItem('loggedInUser')) showMainContent();
 
 function isValidUsername(name){ return /^[a-zA-Z0-9_]{3,15}$/.test(name); }
 function isValidPassword(pw){ return pw.length >= 6; }
@@ -145,46 +131,31 @@ function login(){
   const email=document.getElementById('loginEmail').value.trim();
   const password=document.getElementById('loginPassword').value;
   const user=users.find(u=>u.username===username && u.email===email && u.password===password);
-  if(user){ localStorage.setItem('loggedInUser', username); document.body.classList.add('logged-in'); showMainContent(); }
-  else { alert('Invalid credentials.'); }
+  if(user){ 
+    localStorage.setItem('loggedInUser', username); 
+    showMainContent();
+  } else { alert('Invalid credentials.'); }
 }
 
-function logout(){ localStorage.removeItem('loggedInUser'); document.body.classList.remove('logged-in'); showSignup(); }
-function showMainContent(){ document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.add('hidden'); document.getElementById('mainContent').classList.remove('hidden'); }
+function logout(){ 
+  localStorage.removeItem('loggedInUser'); 
+  document.getElementById('mainContent').classList.add('hidden');
+  showSignup(); 
+}
+
+function showMainContent(){
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  document.body.classList.add('logged-in');
+}
+
 function showLogin(){ document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); }
 function showSignup(){ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); }
 
-// Background Music Toggle
-const music=document.getElementById('bgMusic');
-const musicBtn=document.getElementById('musicBtn');
-musicBtn.addEventListener('click',()=>{
-  if(music.muted){ music.muted=false; music.play(); musicBtn.textContent='🔊 Music Playing'; }
-  else{ music.pause(); musicBtn.textContent='🔇 Music Paused'; }
-});
-
-// PWA Install Banner
-let deferredPrompt;
-const installBanner=document.getElementById('installBanner');
-const installBtn=document.getElementById('installBtn');
-const dismissBtn=document.getElementById('dismissInstall');
-
-window.addEventListener('beforeinstallprompt',(e)=>{
-  e.preventDefault();
-  deferredPrompt = e;
-  installBanner.style.display='block';
-});
-
-installBtn.addEventListener('click', async ()=>{
-  installBanner.style.display='none';
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('User choice:', outcome);
-    deferredPrompt = null;
-  }
-});
-
-dismissBtn.addEventListener('click',()=>{ installBanner.style.display='none'; });
+// Music Search & Social Media placeholders
+function searchSong(){ alert('Implement music search functionality here'); }
+function downloadSocialMedia(){ alert('Implement social media download functionality here'); }
 </script>
 </body>
 </html>
