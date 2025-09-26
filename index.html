@@ -7,235 +7,191 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E90FF">
-<link rel="apple-touch-icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 <style>
-/* Global */
 body { font-family: Arial,sans-serif; margin:0; padding:0; text-align:center; transition: background 0.5s ease; }
-body.logged-in { background:#000; color:#fff; }
-body:not(.logged-in) { background:linear-gradient(135deg,#FF4D4D 0%,#B3B3B3 100%); color:#fff; }
+body.logged-in { background:#000; color:white; }
+body:not(.logged-in) { background: linear-gradient(135deg, #FF4D4D 0%, #B3B3B3 100%); color:white; }
 .hidden { display:none; }
-.card-container, .form-container, .card { max-width:95%; margin:10px auto; padding:20px; border-radius:12px; background:#1E90FF; color:#fff; transition:0.3s; }
+.form-container, .card-container, .card { background:#1E90FF; padding:30px; border-radius:16px; margin:10px auto; max-width:450px; color:white; transition: background 0.3s; }
 body.logged-in .card, body.logged-in .card-container { background:#111; }
-input, button, select { width:90%; padding:10px; margin:6px 0; border-radius:8px; border:none; }
+input, button, select { width:90%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
 button { font-weight:bold; cursor:pointer; transition:0.3s; }
-button:hover { opacity:0.85; }
-h1 { font-size:1.8em; color:red; margin-bottom:10px; }
-.logo { width:80px; height:80px; border-radius:50%; margin-bottom:15px; }
-.button { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:8px 0; padding:12px; border-radius:10px; font-size:16px; text-decoration:none; color:#fff; }
-.telegram { background:linear-gradient(90deg,#00BFFF,#1E90FF); }
-.whatsapp { background:linear-gradient(90deg,#32CD32,#00FF7F); }
-.logout-btn { background:#FF4500; margin-top:10px; }
-.logout-btn:hover { background:#e03e00; }
-
-/* Stack sections vertically in rows */
-.grid-container {
-  display: flex;
-  flex-direction: column; /* Stack vertically */
-  gap: 15px;
-  margin-top: 15px;
-}
-
-/* Card Styling */
-.card {
-  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-  min-height:320px; padding:20px; border-radius:12px; background:#1E90FF; color:white; transition:background 0.3s, transform 0.2s;
-}
-.card:hover { transform:translateY(-5px); }
-.card h2 { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-.card i.section-icon { font-size:24px; color:yellow; }
-
-/* Menu */
-.menu { position:absolute; top:15px; right:15px; display:none; }
-.menu-btn { background:rgba(255,255,255,0.8); border:none; padding:8px 12px; border-radius:50px; font-size:14px; display:flex; align-items:center; gap:5px; cursor:pointer; }
+button:hover { opacity:0.9; }
+.toggle-form { background:none; color:yellow; border:none; cursor:pointer; text-decoration:underline; }
+h1 { color:red; margin-bottom:20px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
+.logo { width:100px; height:100px; border-radius:50%; margin-bottom:20px; }
+.button { display:flex; justify-content:center; align-items:center; gap:10px; width:100%; margin:12px 0; padding:15px; font-size:18px; font-weight:bold; color:white; text-decoration:none; border-radius:12px; background-size:200% 200%; cursor:pointer; }
+.telegram { background: linear-gradient(90deg, #00BFFF, #1E90FF); }
+.whatsapp { background: linear-gradient(90deg, #32CD32, #00FF7F); }
+.logout-btn { background-color:#FF4500; margin-top:15px; }
+.logout-btn:hover { background-color:#e03e00; }
+.wave-container { position:absolute; bottom:0; left:0; width:100%; height:200px; overflow:hidden; z-index:0; }
+body:not(.logged-in) .wave { background: rgba(0,0,0,0.3); }
+body:not(.logged-in) .wave.wave2 { opacity:0.15; }
+.wave { position:absolute; width:200%; height:200%; border-radius:43%; opacity:0.3; animation:waveMove 8s linear infinite; }
+.wave.wave2 { bottom:20px; opacity:0.15; animation-duration:12s; }
+@keyframes waveMove { 0% { transform:translateX(0) translateY(0) rotate(0deg); } 50% { transform:translateX(50%) translateY(10px) rotate(3deg); } 100% { transform:translateX(0) translateY(0) rotate(0deg); } }
+.menu { position:absolute; top:20px; right:20px; display:inline-block; }
+.menu-btn { background:rgba(255,255,255,0.8); border:none; padding:10px 15px; border-radius:50px; font-size:16px; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:5px; }
 .menu-btn.open i { transform:rotate(90deg); }
-.dropdown { position:absolute; top:45px; right:0; background:#000; border-radius:8px; overflow:hidden; min-width:150px; max-height:0; opacity:0; transform:translateY(-8px); transition:all 0.25s; }
+.dropdown { position:absolute; top:55px; right:0; background:#000; color:#fff; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.5); overflow:hidden; min-width:180px; max-height:0; opacity:0; transform:translateY(-10px); transition:max-height 0.3s, opacity 0.3s, transform 0.3s; z-index:10; }
 .dropdown.show { max-height:500px; opacity:1; transform:translateY(0); }
-.dropdown a { display:block; padding:10px 12px; text-decoration:none; color:#fff; font-size:14px; }
+.dropdown a { display:block; padding:12px 15px; text-decoration:none; color:#fff; font-weight:bold; transition: background 0.3s; }
 .dropdown a:hover { background:#222; }
-
-/* In-page App Download Prompt */
-#appDownloadPrompt { display:none; position:fixed; bottom:80px; left:10px; right:10px; background:#32CD32; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1500; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-weight:bold; }
-#appDownloadPrompt button { margin-left:6px; padding:8px 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
-#downloadAppBtn { background:#fff; color:#32CD32; }
-#dismissAppBtn { background:#FF4500; color:white; }
+#installBanner { position:fixed; bottom:20px; left:10px; right:10px; background:#1E90FF; color:white; padding:15px 20px; border-radius:12px; text-align:center; display:none; z-index:1000; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+#installBanner button { margin-left:10px; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; border:none; color:white; }
+#installBanner #installBtn { background:#32CD32; }
+#installBanner #dismissInstall { background:#FF4500; }
+.card-row { display:flex; flex-direction:column; gap:20px; }
 </style>
 </head>
 <body>
 
 <!-- Background Music -->
 <audio id="bgMusic" src="https://files.catbox.moe/dqlb0t.mp3" muted autoplay loop></audio>
-<button id="musicBtn" style="position:fixed; bottom:15px; right:15px; padding:10px 15px; border:none; border-radius:8px; background:#32CD32; color:#fff; font-weight:bold; cursor:pointer; z-index:1000;">🔊 Music</button>
+<button id="musicBtn" style="position:fixed; bottom:20px; right:20px; padding:12px 18px; border:none; border-radius:8px; background:#32CD32; color:white; font-weight:bold; cursor:pointer; z-index:1000;">🔊 Play Music</button>
 
-<!-- Sign Up -->
+<!-- Wave Background -->
+<div class="wave-container">
+  <div class="wave wave1"></div>
+  <div class="wave wave2"></div>
+</div>
+
+<!-- Sign Up Form -->
 <div class="form-container" id="signupForm">
   <h1>Sign Up</h1>
-  
-  <!-- Username, Email, Password -->
   <input type="text" id="signupUsername" placeholder="Username (3-15 chars)">
   <input type="email" id="signupEmail" placeholder="Email">
   <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
-  
-  <!-- Country & Phone -->
-  <select id="signupCountry">
-    <option value="">Select Country</option>
-    <option value="KE">Kenya</option>
-    <option value="US">United States</option>
-    <option value="GB">United Kingdom</option>
-    <option value="NG">Nigeria</option>
-    <option value="ZA">South Africa</option>
-  </select>
-  <input type="text" id="signupPhone" placeholder="Phone Number">
-  <button id="sendCodeBtn" style="background:#FFA500; color:white;">Send Verification Code</button>
-  
-  <!-- Verification Code -->
-  <input type="text" id="verificationCode" placeholder="Enter Code" class="hidden">
-  <button id="verifyCodeBtn" class="hidden" style="background:#32CD32; color:white;">Verify Code</button>
-
-  <!-- Sign Up Button -->
-  <button id="createAccountBtn" style="background:#32CD32; color:white;" onclick="signupWithPhone()">Create Account</button>
-  
+  <select id="signupCountry"><option value="">Select Country</option></select>
+  <button id="createAccountBtn" style="background:#32CD32; color:white;" onclick="signup()">Create Account</button>
   <button class="toggle-form" id="alreadyAccountBtn" style="background:#FFA500; color:white;" onclick="showLogin()">Already have an account? Login</button>
-  
   <div style="margin-top:10px; color:black;">©️ 2025 Trashcore Devs</div>
 </div>
 
-<!-- Login -->
+<!-- Login Form -->
 <div class="form-container hidden" id="loginForm">
   <h1>Login</h1>
   <input type="text" id="loginUsername" placeholder="Username">
   <input type="email" id="loginEmail" placeholder="Email">
   <input type="password" id="loginPassword" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <button class="toggle-form" onclick="showSignup()">Sign Up</button>
+  <button onclick="login()" style="background:#32CD32; color:white;">Login</button>
+  <button class="toggle-form" onclick="showSignup()" style="background:#FFA500; color:white;">Don't have an account? Sign Up</button>
 </div>
 
-<!-- Menu -->
-<div class="menu" id="menu">
-  <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i> Menu</button>
+<!-- Hamburger Menu -->
+<div class="menu hidden" id="menu">
+  <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i> <span>Menu</span></button>
   <div class="dropdown" id="dropdownMenu">
-    <a href="https://t.me/trashcoredev">Owner</a>
-    <a href="https://youtube.com/@giddytennor">YouTube</a>
-    <a href="https://www.instagram.com/putrazyy_xd_">Instagram</a>
-    <a href="#" onclick="refreshPage()">Refresh</a>
-    <a href="#" onclick="exitPage()">Exit</a>
+    <a href="https://t.me/trashcoredev">Chat with Owner</a>
+    <a href="https://youtube.com/@giddytennor?si=H-fa3xk3pYlTE0os">YouTube Channel</a>
+    <a href="https://www.instagram.com/putrazyy_xd_?igsh=YzZ0NDRoaXFxM2Zk">Instagram</a>
+    <a href="#" onclick="refreshPage()">Refresh Page</a>
+    <a href="#" onclick="exitPage()">Exit Page</a>
   </div>
 </div>
 
 <!-- Main Content -->
 <div class="card-container hidden" id="mainContent">
-  <h1>TRASHCORE SITE</h1>
-  <div class="grid-container">
+  <h1 class="page-title">TRASHCORE SITE</h1>
+  <div class="card-row">
     <!-- Services -->
     <div class="card">
-      <i class="fas fa-server section-icon"></i>
-      <h2>Services</h2>
+      <a href="https://t.me/YourBotUsername"><img src="https://files.catbox.moe/7x996w.jpg" alt="Logo" class="logo"></a>
+      <h2>MY SERVICES</h2>
+      <p>Select below:</p>
       <a href="https://t.me/TrashcoreBot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 1</a>
       <a href="http://t.me/Traschoreultra_bot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 2</a>
-      <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Telegram Group</a>
-      <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp Channel</a>
+      <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Join Telegram group</a>
+      <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> Join WhatsApp Channel</a>
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
-    <!-- Music -->
+    <!-- Music Search -->
     <div class="card" id="musicCard">
-      <i class="fas fa-music section-icon"></i>
-      <h2>Music Search</h2>
-      <input type="text" id="songQuery" placeholder="Song name">
+      <h2>Music Search & Download</h2>
+      <input type="text" id="songQuery" placeholder="Enter song name or YouTube link">
       <button onclick="searchSong()">Search</button>
-      <div id="songResults"></div>
+      <div id="songResults" style="margin-top:10px; text-align:left;"></div>
     </div>
 
-    <!-- File Download -->
-    <div class="card" id="downloadCard">
-      <i class="fas fa-download section-icon"></i>
-      <h2>File Download</h2>
-      <input type="text" id="fileLink" placeholder="Mediafire link">
-      <button onclick="downloadFile()">Download</button>
-      <div id="downloadResult"></div>
+    <!-- Mediafire Download -->
+    <div class="card">
+      <h2>Mediafire File Download</h2>
+      <input type="text" id="fileLink" placeholder="Paste Mediafire link here">
+      <button onclick="downloadFile()" style="background:#FF69B4;">Download</button>
+      <div id="downloadResult" style="margin-top:10px;"></div>
     </div>
   </div>
 </div>
 
 <!-- App Download Prompt -->
-<div id="appDownloadPrompt">
-  📲 Install Trashcore App for full experience!
-  <button id="downloadAppBtn">Download</button>
-  <button id="dismissAppBtn">No Thanks</button>
+<div id="appDownloadPrompt" style="display:none; position:fixed; bottom:20px; left:10px; right:10px; background:#32CD32; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1000;">
+  <span>Download the Trashcore App for the best experience!</span>
+  <button id="downloadAppBtn" style="margin-left:10px; background:#111; color:white; padding:10px 15px; border:none; border-radius:8px;">Download</button>
+  <button id="dismissAppBtn" style="margin-left:10px; background:#FF4500; color:white; padding:10px 15px; border:none; border-radius:8px;">Dismiss</button>
 </div>
 
 <script>
-// Users
-let users = JSON.parse(localStorage.getItem("users")) || [];
-let deferredPrompt;
-let generatedCode = "";
+let users = JSON.parse(localStorage.getItem('users')) || [];
 
-// Show/Hide forms
-function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
-function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
+// Populate country dropdown
+const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia & Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts & Nevis","Saint Lucia","Saint Vincent & Grenadines","Samoa","San Marino","Sao Tome & Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad & Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
+const countrySelect = document.getElementById("signupCountry");
+countries.forEach(c=>{ const opt=document.createElement("option"); opt.value=c; opt.textContent=c; countrySelect.appendChild(opt); });
 
-// Signup with phone verification
-document.getElementById("sendCodeBtn").addEventListener("click", () => {
-  const country = document.getElementById("signupCountry").value;
-  const phone = document.getElementById("signupPhone").value.trim();
-  if(!country || !phone) return alert("Select country and enter phone number");
-  generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-  alert(`Verification code sent to ${phone} (Simulated): ${generatedCode}`);
-  document.getElementById("verificationCode").classList.remove("hidden");
-  document.getElementById("verifyCodeBtn").classList.remove("hidden");
-});
+// Validation
+function isValidUsername(name){ return /^[a-zA-Z0-9_]{3,15}$/.test(name); }
+function isValidPassword(pw){ return pw.length >=6; }
 
-document.getElementById("verifyCodeBtn").addEventListener("click", () => {
-  const codeInput = document.getElementById("verificationCode").value.trim();
-  if(codeInput === generatedCode){
-    alert("Phone verified! Now click Create Account.");
-  } else { alert("Incorrect code."); }
-});
-
-function signupWithPhone(){
+// Sign Up
+function signup(){
   const username = document.getElementById("signupUsername").value.trim();
   const email = document.getElementById("signupEmail").value.trim();
   const password = document.getElementById("signupPassword").value;
-  const phone = document.getElementById("signupPhone").value.trim();
   const country = document.getElementById("signupCountry").value;
-  if(!username || !email || !password || !phone || !country) return alert("Fill all fields!");
-  if(!/^[a-zA-Z0-9_]{3,15}$/.test(username)) return alert("Invalid username!");
-  if(password.length<6) return alert("Password too short!");
-  if(document.getElementById("verificationCode").value.trim()!==generatedCode) return alert("Phone not verified!");
-  if(users.find(u => u.username===username)) return alert("Username exists!");
-  users.push({username,email,password,phone,country});
+  if(!username||!email||!password||!country){ alert("Fill all fields"); return; }
+  if(!isValidUsername(username)){ alert("Invalid username"); return; }
+  if(!isValidPassword(password)){ alert("Password must be at least 6 characters"); return; }
+  if(users.find(u=>u.username===username)){ alert("Username exists"); return; }
+  users.push({username,email,password,country});
   localStorage.setItem("users",JSON.stringify(users));
   localStorage.setItem("loggedInUser",username);
-  alert("Account created and phone verified!");
+  alert("Account created successfully!");
   enterApp(username);
 }
 
+// Login
 function login(){
-  const u=document.getElementById("loginUsername").value.trim();
-  const e=document.getElementById("loginEmail").value.trim();
-  const p=document.getElementById("loginPassword").value.trim();
-  const user=users.find(x=>x.username===u && x.email===e && x.password===p);
-  if(user){ enterApp(u); } else { alert("Invalid credentials!"); }
+  const username=document.getElementById("loginUsername").value.trim();
+  const email=document.getElementById("loginEmail").value.trim();
+  const password=document.getElementById("loginPassword").value;
+  const user=users.find(u=>u.username===username && u.email===email && u.password===password);
+  if(user){ localStorage.setItem("loggedInUser",username); enterApp(username); }
+  else{ alert("Invalid credentials"); }
 }
 
-function enterApp(u){
+// Show/Hide Forms
+function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
+function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
+
+// Enter App
+function enterApp(user){
   document.body.classList.add("logged-in");
   document.getElementById("signupForm").classList.add("hidden");
-  document.getElementById("loginForm").
-classList.add("hidden");
+  document.getElementById("loginForm").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
-  document.getElementById("menu").style.display = "block";
-
-  // Play background music
-  const music = document.getElementById("bgMusic");
-  if(music) music.play().catch(e => console.log("Autoplay blocked:", e));
-
-  // Show app download prompt
-  setTimeout(()=>{ document.getElementById("appDownloadPrompt").style.display="block"; }, 3000);
+  document.getElementById("menu").style.display="block";
+  const music=document.getElementById("bgMusic");
+  if(music) music.play().catch(e=>console.log("Autoplay blocked:",e));
+  setTimeout(()=>{ document.getElementById("appDownloadPrompt").style.display="block"; },3000);
+  const msg=new SpeechSynthesisUtterance(`Welcome to Trashcore site. Enjoy our services. Proceed with your logins.`);
+  msg.lang="en-US"; const voices=speechSynthesis.getVoices();
+  msg.voice=voices.find(v=>v.name.toLowerCase().includes("female"))||voices[0];
+  speechSynthesis.speak(msg);
 }
 
+// Logout
 function logout(){
   localStorage.removeItem("loggedInUser");
   document.body.classList.remove("logged-in");
@@ -244,73 +200,73 @@ function logout(){
   showLogin();
 }
 
-// Hamburger menu
-const menuBtn = document.getElementById("menuBtn");
-const dropdown = document.getElementById("dropdownMenu");
-menuBtn.addEventListener("click", ()=>{
-  dropdown.classList.toggle("show");
-  menuBtn.classList.toggle("open");
-});
-window.addEventListener("click", e=>{
-  if(!e.target.closest(".menu-btn")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); }
-});
+// Menu toggle
+const menuBtn=document.getElementById("menuBtn"); const dropdown=document.getElementById("dropdownMenu");
+menuBtn.addEventListener("click",()=>{ dropdown.classList.toggle("show"); menuBtn.classList.toggle("open"); });
+window.addEventListener("click",e=>{ if(!e.target.closest(".menu-btn")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); } });
 
 // Music toggle
-document.getElementById("musicBtn").addEventListener("click", ()=>{
-  const music = document.getElementById("bgMusic");
-  if(music.muted){ music.muted=false; music.play(); } else { music.pause(); }
-});
+document.getElementById("musicBtn").addEventListener("click",()=>{ const music=document.getElementById("bgMusic"); if(music.muted){ music.muted=false; music.play(); } else { music.pause(); } });
 
 // Refresh & Exit
 function refreshPage(){ location.reload(); }
-function exitPage(){ if(confirm("Exit page?")){ window.open('','_self'); window.close(); } }
+function exitPage(){ if(confirm("Exit page?"))
+{
+  window.open('', '_self'); window.close(); } }
 
-// Music Search
+// Music Search & Download
 async function searchSong(){
-  const query=document.getElementById("songQuery").value.trim();
-  if(!query) return alert("Enter song name");
-  const resultsDiv=document.getElementById("songResults");
-  resultsDiv.innerHTML="<p>Searching...</p>";
+  const query = document.getElementById('songQuery').value.trim();
+  if(!query){ alert('Enter a song name'); return; }
+  const resultsDiv = document.getElementById('songResults');
+  resultsDiv.innerHTML = '<p>Searching...</p>';
   try{
-    const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
-    const data=await res.json();
-    resultsDiv.innerHTML="";
-    if(data.results.length===0){ resultsDiv.innerHTML="<p>No results found</p>"; return; }
-    const ul=document.createElement("ul");
-    data.results.forEach(s=>{
-      const li=document.createElement("li");
-      li.innerHTML=`${s.trackName} - ${s.artistName} <a href="${s.previewUrl}" target="_blank" download>[Preview]</a>`;
+    const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
+    const data = await response.json();
+    resultsDiv.innerHTML = '';
+    if(data.results.length === 0){ resultsDiv.innerHTML = '<p>No results found.</p>'; return; }
+    const ul = document.createElement('ul');
+    data.results.forEach(song => {
+      const li = document.createElement('li');
+      li.innerHTML = `${song.trackName} - ${song.artistName} <a href="${song.previewUrl}" target="_blank" download> [Preview/Download]</a>`;
       ul.appendChild(li);
     });
     resultsDiv.appendChild(ul);
-  } catch(err){ resultsDiv.innerHTML="<p>Error fetching songs</p>"; console.error(err);}
+  } catch(err){
+    resultsDiv.innerHTML = '<p>Error fetching songs.</p>';
+    console.error(err);
+  }
 }
 
-// Mediafire download
+// Mediafire Download
 function downloadFile(){
-  const link=document.getElementById("fileLink").value.trim();
-  if(!link) return alert("Enter Mediafire link");
-  document.getElementById("downloadResult").innerHTML=`<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
+  const link = document.getElementById('fileLink').value.trim();
+  const resultDiv = document.getElementById('downloadResult');
+  if(!link){ alert('Enter Mediafire link'); return; }
+  // Simple redirect to Mediafire link
+  resultDiv.innerHTML = `<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
 }
 
 // App download prompt buttons
 document.getElementById("downloadAppBtn").addEventListener("click", ()=>{
-  alert("Redirecting to app download page..."); 
-  document.getElementById("appDownloadPrompt").style.display="none";
+  alert("Redirecting to Trashcore App download...");
+  // Replace with actual app link
+  window.open("https://example.com/trashcore-app.apk", "_blank");
 });
 document.getElementById("dismissAppBtn").addEventListener("click", ()=>{
   document.getElementById("appDownloadPrompt").style.display="none";
 });
 
-// Check auto-login
-const loggedUser=localStorage.getItem("loggedInUser");
-if(loggedUser) enterApp(loggedUser);
+// Auto-login if user is already logged in
+const loggedInUser = localStorage.getItem('loggedInUser');
+if(loggedInUser){
+  enterApp(loggedInUser);
+}
 
-// PWA Install
-window.addEventListener('beforeinstallprompt', (e)=>{
-  e.preventDefault();
-  deferredPrompt=e;
-});
+// Service Worker registration (PWA support)
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>{ console.log('Service Worker registered'); });
+}
 </script>
 </body>
 </html>
