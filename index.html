@@ -38,10 +38,10 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 .dropdown.show { max-height:500px; opacity:1; transform:translateY(0); }
 .dropdown a { display:block; padding:12px 15px; text-decoration:none; color:#fff; font-weight:bold; transition: background 0.3s; }
 .dropdown a:hover { background:#222; }
-#installBanner { position:fixed; bottom:20px; left:10px; right:10px; background:#1E90FF; color:white; padding:15px 20px; border-radius:12px; text-align:center; display:none; z-index:1000; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
-#installBanner button { margin-left:10px; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; border:none; color:white; }
-#installBanner #installBtn { background:#32CD32; }
-#installBanner #dismissInstall { background:#FF4500; }
+#appDownloadPrompt { display:none; position:fixed; bottom:20px; left:10px; right:10px; background:#1E90FF; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1000; }
+#appDownloadPrompt button { margin-left:10px; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; border:none; color:white; }
+#downloadAppBtn { background:#32CD32; }
+#dismissAppBtn { background:#FF4500; }
 .card-row { display:flex; flex-direction:column; gap:20px; }
 </style>
 </head>
@@ -107,114 +107,99 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
-    <!-- Music Search -->
+    <!-- Music Search & Download -->
     <div class="card" id="musicCard">
       <h2>Music Search & Download</h2>
       <input type="text" id="songQuery" placeholder="Enter song name or YouTube link">
-      <button onclick="searchSong()">Search</button>
+      <button onclick="search
+Song()" style="background:#32CD32; color:white;">Search</button>
       <div id="songResults" style="margin-top:10px; text-align:left;"></div>
     </div>
 
     <!-- Mediafire Download -->
-    <div class="card">
+    <div class="card" id="mediafireCard">
       <h2>Mediafire File Download</h2>
-      <input type="text" id="fileLink" placeholder="Paste Mediafire link here">
-      <button onclick="downloadFile()" style="background:#FF69B4;">Download</button>
+      <input type="text" id="fileLink" placeholder="Paste Mediafire link">
+      <button onclick="downloadFile()" style="background:#FF69B4; color:white;">Download</button>
       <div id="downloadResult" style="margin-top:10px;"></div>
     </div>
   </div>
 </div>
 
 <!-- App Download Prompt -->
-<div id="appDownloadPrompt" style="display:none; position:fixed; bottom:20px; left:10px; right:10px; background:#32CD32; color:white; padding:15px 20px; border-radius:12px; text-align:center; z-index:1000;">
-  <span>Download the Trashcore App for the best experience!</span>
-  <button id="downloadAppBtn" style="margin-left:10px; background:#111; color:white; padding:10px 15px; border:none; border-radius:8px;">Download</button>
-  <button id="dismissAppBtn" style="margin-left:10px; background:#FF4500; color:white; padding:10px 15px; border:none; border-radius:8px;">Dismiss</button>
+<div id="appDownloadPrompt">
+  <span>Download the Trashcore App for a better experience!</span>
+  <button id="downloadAppBtn">Download</button>
+  <button id="dismissAppBtn">Dismiss</button>
 </div>
 
 <script>
+// Users & Auth
 let users = JSON.parse(localStorage.getItem('users')) || [];
 
-// Populate country dropdown
-const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia & Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts & Nevis","Saint Lucia","Saint Vincent & Grenadines","Samoa","San Marino","Sao Tome & Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad & Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
-const countrySelect = document.getElementById("signupCountry");
-countries.forEach(c=>{ const opt=document.createElement("option"); opt.value=c; opt.textContent=c; countrySelect.appendChild(opt); });
+if(localStorage.getItem('loggedInUser')){
+  enterApp(localStorage.getItem('loggedInUser'));
+}
 
-// Validation
 function isValidUsername(name){ return /^[a-zA-Z0-9_]{3,15}$/.test(name); }
-function isValidPassword(pw){ return pw.length >=6; }
+function isValidPassword(pw){ return pw.length >= 6; }
 
-// Sign Up
 function signup(){
-  const username = document.getElementById("signupUsername").value.trim();
-  const email = document.getElementById("signupEmail").value.trim();
-  const password = document.getElementById("signupPassword").value;
-  const country = document.getElementById("signupCountry").value;
-  if(!username||!email||!password||!country){ alert("Fill all fields"); return; }
-  if(!isValidUsername(username)){ alert("Invalid username"); return; }
-  if(!isValidPassword(password)){ alert("Password must be at least 6 characters"); return; }
-  if(users.find(u=>u.username===username)){ alert("Username exists"); return; }
+  const username = document.getElementById('signupUsername').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const country = document.getElementById('signupCountry').value;
+  if(!username || !email || !password || !country){ alert('Fill all fields'); return; }
+  if(!isValidUsername(username)){ alert('Invalid username'); return; }
+  if(!isValidPassword(password)){ alert('Password min 6 chars'); return; }
+  if(users.find(u=>u.username===username)){ alert('Username exists'); return; }
   users.push({username,email,password,country});
-  localStorage.setItem("users",JSON.stringify(users));
-  localStorage.setItem("loggedInUser",username);
-  alert("Account created successfully!");
-  enterApp(username);
-}
-
-// Login
-function login(){
-  const username=document.getElementById("loginUsername").value.trim();
-  const email=document.getElementById("loginEmail").value.trim();
-  const password=document.getElementById("loginPassword").value;
-  const user=users.find(u=>u.username===username && u.email===email && u.password===password);
-  if(user){ localStorage.setItem("loggedInUser",username); enterApp(username); }
-  else{ alert("Invalid credentials"); }
-}
-
-// Show/Hide Forms
-function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
-function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
-
-// Enter App
-function enterApp(user){
-  document.body.classList.add("logged-in");
-  document.getElementById("signupForm").classList.add("hidden");
-  document.getElementById("loginForm").classList.add("hidden");
-  document.getElementById("mainContent").classList.remove("hidden");
-  document.getElementById("menu").style.display="block";
-  const music=document.getElementById("bgMusic");
-  if(music) music.play().catch(e=>console.log("Autoplay blocked:",e));
-  setTimeout(()=>{ document.getElementById("appDownloadPrompt").style.display="block"; },3000);
-  const msg=new SpeechSynthesisUtterance(`Welcome to Trashcore site. Enjoy our services. Proceed with your logins.`);
-  msg.lang="en-US"; const voices=speechSynthesis.getVoices();
-  msg.voice=voices.find(v=>v.name.toLowerCase().includes("female"))||voices[0];
-  speechSynthesis.speak(msg);
-}
-
-// Logout
-function logout(){
-  localStorage.removeItem("loggedInUser");
-  document.body.classList.remove("logged-in");
-  document.getElementById("mainContent").classList.add("hidden");
-  document.getElementById("menu").style.display="none";
+  localStorage.setItem('users', JSON.stringify(users));
+  alert('Account created! Please login.');
   showLogin();
 }
 
-// Menu toggle
-const menuBtn=document.getElementById("menuBtn"); const dropdown=document.getElementById("dropdownMenu");
-menuBtn.addEventListener("click",()=>{ dropdown.classList.toggle("show"); menuBtn.classList.toggle("open"); });
-window.addEventListener("click",e=>{ if(!e.target.closest(".menu-btn")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); } });
+function login(){
+  const username = document.getElementById('loginUsername').value.trim();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const user = users.find(u => u.username===username && u.email===email && u.password===password);
+  if(user){ 
+    localStorage.setItem('loggedInUser', username); 
+    enterApp(username); 
+  } else { alert('Invalid credentials'); }
+}
 
-// Music toggle
-document.getElementById("musicBtn").addEventListener("click",()=>{ const music=document.getElementById("bgMusic"); if(music.muted){ music.muted=false; music.play(); } else { music.pause(); } });
+function logout(){
+  localStorage.removeItem('loggedInUser');
+  document.body.classList.remove('logged-in');
+  document.getElementById('mainContent').classList.add('hidden');
+  document.getElementById('menu').classList.add('hidden');
+  showLogin();
+}
 
-// Refresh & Exit
-function refreshPage(){ location.reload(); }
-function exitPage(){ if(confirm("Exit page?"))
-{
-  window.open('', '_self'); window.close(); } }
+function enterApp(user){
+  document.body.classList.add('logged-in');
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  document.getElementById('menu').style.display="block";
+  const music=document.getElementById('bgMusic');
+  if(music) music.play().catch(e=>console.log("Autoplay blocked:",e));
+  setTimeout(()=>{ document.getElementById("appDownloadPrompt").style.display="block"; },3000);
+}
 
-// Music Search & Download
+// Form toggles
+function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
+function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
+
+// Hamburger Menu
+const menuBtn = document.getElementById('menuBtn');
+const dropdown = document.getElementById('dropdownMenu');
+menuBtn.addEventListener('click', () => { dropdown.classList.toggle('show'); menuBtn.classList.toggle('open'); });
+window.addEventListener('click', e => { if(!e.target.matches('.menu-btn') && !e.target.matches('.menu-btn *')){ dropdown.classList.remove('show'); menuBtn.classList.remove('open'); } });
+
+// Music Search
 async function searchSong(){
   const query = document.getElementById('songQuery').value.trim();
   if(!query){ alert('Enter a song name'); return; }
@@ -232,10 +217,7 @@ async function searchSong(){
       ul.appendChild(li);
     });
     resultsDiv.appendChild(ul);
-  } catch(err){
-    resultsDiv.innerHTML = '<p>Error fetching songs.</p>';
-    console.error(err);
-  }
+  } catch(err){ resultsDiv.innerHTML = '<p>Error fetching songs.</p>'; console.error(err); }
 }
 
 // Mediafire Download
@@ -243,30 +225,32 @@ function downloadFile(){
   const link = document.getElementById('fileLink').value.trim();
   const resultDiv = document.getElementById('downloadResult');
   if(!link){ alert('Enter Mediafire link'); return; }
-  // Simple redirect to Mediafire link
   resultDiv.innerHTML = `<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
 }
 
-// App download prompt buttons
-document.getElementById("downloadAppBtn").addEventListener("click", ()=>{
-  alert("Redirecting to Trashcore App download...");
-  // Replace with actual app link
-  window.open("https://example.com/trashcore-app.apk", "_blank");
-});
-document.getElementById("dismissAppBtn").addEventListener("click", ()=>{
-  document.getElementById("appDownloadPrompt").style.display="none";
+// App Download Buttons
+document.getElementById("downloadAppBtn").addEventListener("click", ()=>{ window.open("https://example.com/trashcore-app.apk","_blank"); });
+document.getElementById("dismissAppBtn").addEventListener("click", ()=>{ document.getElementById("appDownloadPrompt").style.display="none"; });
+
+// Music toggle
+const musicBtn = document.getElementById('musicBtn');
+musicBtn.addEventListener('click', () => {
+  const music = document.getElementById('bgMusic');
+  if(music.muted){ music.muted=false; music.play(); musicBtn.textContent='🔊 Music Playing'; }
+  else{ music.pause(); musicBtn.textContent='🔇 Music Paused'; }
 });
 
-// Auto-login if user is already logged in
-const loggedInUser = localStorage.getItem('loggedInUser');
-if(loggedInUser){
-  enterApp(loggedInUser);
-}
+// Refresh & Exit
+function refreshPage(){ location.reload(); }
+function exitPage(){ if(confirm("Are you sure you want to exit?")){ window.open('', '_self'); window.close(); } }
 
-// Service Worker registration (PWA support)
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=>{ console.log('Service Worker registered'); });
-}
+// Populate countries
+const countrySelect = document.getElementById('signupCountry');
+const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Congo-Brazzaville)","Costa Rica","Croatia","Cuba","Cyprus","Czechia (Czech Republic)","Democratic Republic of the Congo","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini (fmr. \"Swaziland\")","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Holy See","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar (formerly Burma)","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine State","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States of America","Uruguay","Uzbekistan","Vanuatu","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
+countries.forEach(c=>{ const option=document.createElement('option'); option.value=c; option.textContent=c; countrySelect.appendChild(option); });
+
+// Service Worker
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').then(()=>{ console.log('Service Worker registered'); }); }
 </script>
 </body>
 </html>
