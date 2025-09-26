@@ -14,7 +14,7 @@ body:not(.logged-in) { background: linear-gradient(135deg, #FF4D4D 0%, #B3B3B3 1
 .hidden { display:none; }
 .form-container, .card-container, .card { background:#1E90FF; padding:30px; border-radius:16px; margin:10px auto; max-width:450px; color:white; transition: background 0.3s; }
 body.logged-in .card, body.logged-in .card-container { background:#111; }
-input, button, select { width:90%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
+input, button { width:90%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
 button { font-weight:bold; cursor:pointer; transition:0.3s; }
 button:hover { opacity:0.9; }
 .toggle-form { background:none; color:yellow; border:none; cursor:pointer; text-decoration:underline; }
@@ -61,7 +61,6 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
   <input type="text" id="signupUsername" placeholder="Username (3-15 chars)">
   <input type="email" id="signupEmail" placeholder="Email">
   <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
-  <select id="signupCountry"><option value="">Select Country</option></select>
   <button id="createAccountBtn" style="background:#32CD32; color:white;" onclick="signup()">Create Account</button>
   <button class="toggle-form" style="background:#FFA500; color:white;" onclick="showLoginForm()">Already have an account? Login</button>
   <div style="margin-top:10px; color:black;">©️ 2025 Trashcore Devs</div>
@@ -100,11 +99,9 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <a href="http://t.me/Traschoreultra_bot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 2</a>
       <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Join Telegram group</a>
       <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> Join WhatsApp Channel</a>
-      <button class="logout-btn" onclick
-="logout()">Logout</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
-    <!-- Music Search & Download -->
     <div class="card" id="musicCard">
       <h2>Music Search & Download</h2>
       <input type="text" id="songQuery" placeholder="Enter song name or YouTube link">
@@ -112,7 +109,6 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
       <div id="songResults" style="margin-top:10px; text-align:left;"></div>
     </div>
 
-    <!-- Mediafire Download -->
     <div class="card" id="mediafireCard">
       <h2>Mediafire File Download</h2>
       <input type="text" id="fileLink" placeholder="Paste Mediafire link here">
@@ -132,13 +128,8 @@ body:not(.logged-in) .wave.wave2 { opacity:0.15; }
 <script>
 // Users & Auth
 let users = JSON.parse(localStorage.getItem('users')) || [];
+if(localStorage.getItem('loggedInUser')) enterApp(localStorage.getItem('loggedInUser'));
 
-if(localStorage.getItem('loggedInUser')){
-  const username = localStorage.getItem('loggedInUser');
-  enterApp(username);
-}
-
-// Show login/signup forms
 function showLoginForm(){
   document.getElementById('signupForm').classList.add('hidden');
   document.getElementById('loginForm').classList.remove('hidden');
@@ -148,51 +139,42 @@ function showSignupForm(){
   document.getElementById('signupForm').classList.remove('hidden');
 }
 
-// Signup
 function isValidUsername(name){ return /^[a-zA-Z0-9_]{3,15}$/.test(name); }
 function isValidPassword(pw){ return pw.length >= 6; }
+
 function signup(){
-  const username = document.getElementById('signupUsername').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value;
-  const country = document.getElementById('signupCountry').value;
-  if(!username || !email || !password || !country){ alert('Fill all fields'); return; }
+  const username=document.getElementById('signupUsername').value.trim();
+  const email=document.getElementById('signupEmail').value.trim();
+  const password=document.getElementById('signupPassword').value;
+  if(!username||!email||!password){ alert('Fill all fields'); return; }
   if(!isValidUsername(username)){ alert('Invalid username'); return; }
-  if(!isValidPassword(password)){ alert('Password min 6 chars'); return; }
-  if(users.find(u=>u.username===username)){ alert('Username exists'); return; }
-  users.push({username,email,password,country});
+  if(!isValidPassword(password)){ alert('Password must be at least 6 characters'); return; }
+  if(users.find(u=>u.username===username)){ alert('Username already exists'); return; }
+  users.push({username,email,password});
   localStorage.setItem('users', JSON.stringify(users));
   alert('Account created! Please login.');
   showLoginForm();
 }
 
-// Login
 function login(){
-  const username = document.getElementById('loginUsername').value.trim();
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const user = users.find(u => u.username===username && u.email===email && u.password===password);
-  if(user){
-    localStorage.setItem('loggedInUser', username);
-    enterApp(username);
-  } else {
-    alert('Invalid credentials. Please try again.');
-  }
+  const username=document.getElementById('loginUsername').value.trim();
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const user=users.find(u=>u.username===username && u.email===email && u.password===password);
+  if(user){ localStorage.setItem('loggedInUser', username); enterApp(username); }
+  else alert('Invalid credentials.');
 }
 
-// Enter app
 function enterApp(user){
   document.body.classList.add('logged-in');
   document.getElementById('signupForm').classList.add('hidden');
   document.getElementById('loginForm').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
   document.getElementById('menu').style.display="block";
-  const music=document.getElementById('bgMusic');
-  if(music) music.play().catch(e => console.log("Autoplay blocked:", e));
-  setTimeout(()=>{ document.getElementById("appDownloadPrompt").style.display="block"; },3000);
+  const music=document.getElementById('bgMusic'); if(music) music.play().catch(e=>console.log("Autoplay blocked",e));
+  setTimeout(()=>{ document.getElementById('appDownloadPrompt').style.display='block'; },3000);
 }
 
-// Logout
 function logout(){
   localStorage.removeItem('loggedInUser');
   document.body.classList.remove('logged-in');
@@ -201,64 +183,70 @@ function logout(){
   showSignupForm();
 }
 
-// Hamburger menu
+// Hamburger Menu
 const menuBtn=document.getElementById('menuBtn');
 const dropdown=document.getElementById('dropdownMenu');
 menuBtn.addEventListener('click',()=>{ dropdown.classList.toggle('show'); menuBtn.classList.toggle('open'); });
 window.addEventListener('click', e=>{ if(!e.target.matches('.menu-btn')&&!e.target.matches('.menu-btn *')){ dropdown.classList.remove('show'); menuBtn.classList.remove('open'); } });
 
-// Music search
+// Music Search
 async function searchSong(){
   const query=document.getElementById('songQuery').value.trim();
   if(!query){ alert('Enter a song name'); return; }
-  const resultsDiv=document.getElementById('songResults');
-  resultsDiv.innerHTML='<p>Searching...</p>';
+  const resultsDiv=document.getElementById('songResults'); resultsDiv.innerHTML='<p>Searching...</p>';
   try{
-    const response=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
-    const data=await response.json();
-    resultsDiv.innerHTML='';
+    const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=10`);
+    const data=await res.json(); resultsDiv.innerHTML='';
     if(data.results.length===0){ resultsDiv.innerHTML='<p>No results found.</p>'; return; }
     const ul=document.createElement('ul');
     data.results.forEach(song=>{
       const li=document.createElement('li');
       li.innerHTML=`${song.trackName} - ${song.artistName} <a href="${song.previewUrl}" target="_blank" download> [Preview/Download]</a>`;
       ul.appendChild(li);
-    });
-    resultsDiv.appendChild(ul);
+    }); resultsDiv.appendChild(ul);
   }catch(err){ resultsDiv.innerHTML='<p>Error fetching songs.</p>'; console.error(err); }
 }
 
-// Mediafire download
+// Mediafire Download
 function downloadFile(){
-  const link=document.getElementById('fileLink').value.trim();
-  const resultDiv=document.getElementById('downloadResult');
-  if(!link){ alert('Enter Mediafire link'); return; }
-  resultDiv.innerHTML=`<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
+const link = document.getElementById('fileLink').value.trim();
+  const resultDiv = document.getElementById('downloadResult');
+  if (!link) { alert('Enter Mediafire link'); return; }
+  resultDiv.innerHTML = `<a href="${link}" target="_blank" class="button" style="background:#FF69B4;">Click here to download</a>`;
 }
 
-// App download buttons
-document.getElementById("downloadAppBtn").addEventListener("click", ()=>{ window.open("https://example.com/trashcore-app.apk","_blank"); });
-document.getElementById("dismissAppBtn").addEventListener("click", ()=>{ document.getElementById("appDownloadPrompt").style.display="none"; });
-
-// Music toggle
-const musicBtn=document.getElementById('musicBtn');
-musicBtn.addEventListener('click', ()=>{
-  const music=document.getElementById('bgMusic');
-  if(music.muted){ music.muted=false; music.play(); musicBtn.textContent='🔊 Music Playing'; }
-  else{ music.pause(); musicBtn.textContent='🔇 Music Paused'; }
+// App Download Buttons
+document.getElementById("downloadAppBtn").addEventListener("click", () => {
+  window.open("https://example.com/trashcore-app.apk", "_blank");
+});
+document.getElementById("dismissAppBtn").addEventListener("click", () => {
+  document.getElementById("appDownloadPrompt").style.display = "none";
 });
 
-// Refresh & Exit
-function refreshPage(){ location.reload(); }
-function exitPage(){ if(confirm("Are you sure you want to exit?")){ window.open('','_self'); window.close(); } }
+// Background Music Toggle
+const music = document.getElementById('bgMusic');
+const musicBtn = document.getElementById('musicBtn');
+musicBtn.addEventListener('click', () => {
+  if (music.muted) {
+    music.muted = false;
+    music.play();
+    musicBtn.textContent = '🔊 Music Playing';
+  } else {
+    music.pause();
+    musicBtn.textContent = '🔇 Music Paused';
+  }
+});
 
-// Populate countries
-const countrySelect=document.getElementById('signupCountry');
-const countries=["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Costa Rica","Croatia","Cuba","Cyprus","Czechia","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Holy See","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
-countries.forEach(c=>{ const option=document.createElement('option'); option.value=c; option.textContent=c; countrySelect.appendChild(option); });
+// Refresh & Exit Functions
+function refreshPage() { location.reload(); }
+function exitPage() { if (confirm("Are you sure you want to exit?")) { window.open('', '_self'); window.close(); } }
 
-// Service worker
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').then(()=>{ console.log('Service Worker registered'); }); }
+// Service Worker registration
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(() => {
+    console.log('Service Worker registered');
+  });
+}
 </script>
 </body>
 </html>
