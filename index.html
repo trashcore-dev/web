@@ -8,90 +8,44 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E90FF">
 <style>
-/* Global Styles */
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; text-align: center; transition: background 0.5s ease; }
 body.logged-in { background: #000; color: white; }
 body:not(.logged-in) { background: linear-gradient(135deg, #FF4D4D 0%, #B3B3B3 100%); color: white; }
-
 .hidden { display: none; }
 .form-container, .card-container, .card {
-  background: #1E90FF; padding: 30px; border-radius: 16px; margin: 10px auto; max-width: 450px; color: white; transition: background 0.3s;
+  background: #1E90FF; padding: 30px; border-radius: 16px; margin: 10px auto; max-width: 450px; color: white;
 }
 body.logged-in .card, body.logged-in .card-container { background: #111; }
-input, button, select { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; }
+input, button { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; }
 button { background-color: #32CD32; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
 button:hover { background-color: #28a428; }
 .toggle-form { background: none; color: yellow; border: none; cursor: pointer; text-decoration: underline; }
-h1 { color: red; margin-bottom: 20px; text-shadow: 2px 2px 6px rgba(0,0,0,0.3); }
+h1 { color: red; }
 .logo { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px; }
 .button { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; margin: 12px 0; padding: 15px; font-size: 18px; font-weight: bold; color: white; text-decoration: none; border-radius: 12px; background-size: 200% 200%; cursor: pointer; }
 .telegram { background: linear-gradient(90deg, #00BFFF, #1E90FF); }
 .whatsapp { background: linear-gradient(90deg, #32CD32, #00FF7F); }
 .logout-btn { background-color: #FF4500; margin-top: 15px; }
 .logout-btn:hover { background-color: #e03e00; }
-.chat-messages { background: #222; padding: 10px; height: 200px; overflow-y: auto; margin: 10px 0; text-align: left; border-radius: 8px; }
-ul { list-style: none; padding: 0; text-align: left; }
-li { padding: 4px; cursor: pointer; border-radius: 4px; }
-li:hover { background: #333; }
-.wave-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; overflow: hidden; z-index: 0; }
-body:not(.logged-in) .wave { background: rgba(0,0,0,0.3); }
-body:not(.logged-in) .wave.wave2 { opacity: 0.15; }
-.wave { position: absolute; width: 200%; height: 200%; border-radius: 43%; opacity: 0.3; animation: waveMove 8s linear infinite; }
-.wave.wave2 { bottom: 20px; opacity: 0.15; animation-duration: 12s; }
-@keyframes waveMove { 0% { transform: translateX(0) translateY(0) rotate(0deg); } 50% { transform: translateX(50%) translateY(10px) rotate(3deg); } 100% { transform: translateX(0) translateY(0) rotate(0deg); } }
-.menu { position: absolute; top: 20px; right: 20px; display: inline-block; }
-.menu-btn { background: rgba(255,255,255,0.8); border: none; padding: 10px 15px; border-radius: 50px; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px; }
+.menu { position: absolute; top: 20px; right: 20px; display: none; }
+.menu-btn { background: rgba(255,255,255,0.8); border: none; padding: 10px 15px; border-radius: 50px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
 .menu-btn.open i { transform: rotate(90deg); }
-.dropdown { position: absolute; top: 55px; right: 0; background: #000; color: #fff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); overflow: hidden; min-width: 180px; max-height: 0; opacity: 0; transform: translateY(-10px); transition: max-height 0.3s, opacity 0.3s, transform 0.3s; z-index: 10; }
+.dropdown { position: absolute; top: 55px; right: 0; background: #000; color: #fff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); overflow: hidden; min-width: 180px; max-height: 0; opacity: 0; transform: translateY(-10px); transition: all 0.3s; }
 .dropdown.show { max-height: 500px; opacity: 1; transform: translateY(0); }
-.dropdown a { display: block; padding: 12px 15px; text-decoration: none; color: #fff; font-weight: bold; transition: background 0.3s; }
+.dropdown a { display: block; padding: 12px; text-decoration: none; color: #fff; }
 .dropdown a:hover { background: #222; }
-#installBanner { position: fixed; bottom: 20px; left: 10px; right: 10px; background: #1E90FF; color: white; padding: 15px 20px; border-radius: 12px; text-align: center; display: none; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-#installBanner button { margin-left: 10px; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; color: white; }
-#installBanner #installBtn { background: #32CD32; }
-#installBanner #dismissInstall { background: #FF4500; }
-
-/* League Dropdown Styling */
-#leagueSelect {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-  outline: none;
-}
-body:not(.logged-in) #leagueSelect {
-  background: linear-gradient(90deg, #1E90FF, #00BFFF);
-  color: white;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-body.logged-in #leagueSelect {
-  background: #111;
-  color: #fff;
-  border: 1px solid #444;
-}
-#leagueSelect:hover {
-  box-shadow: 0 0 8px rgba(30,144,255,0.8);
-}
+.chat-messages { background: #222; padding: 10px; height: 200px; overflow-y: auto; margin: 10px 0; text-align: left; border-radius: 8px; }
 </style>
 </head>
 <body>
 
-<!-- Auto-playing Music -->
+<!-- Background Music -->
 <audio id="bgMusic" src="https://files.catbox.moe/dqlb0t.mp3" muted autoplay loop></audio>
 <button id="musicBtn" style="position:fixed; bottom:20px; right:20px; padding:12px 18px; border:none; border-radius:8px; background:#32CD32; color:white; font-weight:bold; cursor:pointer; z-index:1000;">
   🔊 Play Music
 </button>
 
-<!-- Wave Background -->
-<div class="wave-container">
-  <div class="wave wave1"></div>
-  <div class="wave wave2"></div>
-</div>
-
-<!-- Sign Up Form -->
+<!-- Sign Up -->
 <div class="form-container" id="signupForm">
   <h1>Sign Up</h1>
   <input type="text" id="signupUsername" placeholder="Username (3-15 letters/numbers/_)">
@@ -101,7 +55,7 @@ body.logged-in #leagueSelect {
   <button class="toggle-form" onclick="showLogin()">Already have an account? Login</button>
 </div>
 
-<!-- Login Form -->
+<!-- Login -->
 <div class="form-container hidden" id="loginForm">
   <h1>Login</h1>
   <input type="text" id="loginUsername" placeholder="Username">
@@ -111,43 +65,44 @@ body.logged-in #leagueSelect {
   <button class="toggle-form" onclick="showSignup()">Don't have an account? Sign Up</button>
 </div>
 
-<!-- Hamburger Menu -->
-<div class="menu hidden" id="menu">
+<!-- Menu -->
+<div class="menu" id="menu">
   <button class="menu-btn" id="menuBtn">
     <i class="fas fa-bars"></i> <span>Menu</span>
   </button>
   <div class="dropdown" id="dropdownMenu">
     <a href="https://t.me/trashcoredev">Chat with Owner</a>
-    <a href="https://youtube.com/@giddytennor?si=H-fa3xk3pYlTE0os">YouTube Channel</a>
-    <a href="https://www.instagram.com/putrazyy_xd_?igsh=YzZ0NDRoaXFxM2Zk">Instagram</a>
-    <a href="#" onclick="refreshPage()">Refresh Page</a>
-    <a href="#" onclick="exitPage()">Exit Page</a>
+    <a href="https://youtube.com/@giddytennor">YouTube</a>
+    <a href="https://www.instagram.com/putrazyy_xd_">Instagram</a>
+    <a href="#" onclick="refreshPage()">Refresh</a>
+    <a href="#" onclick="exitPage()">Exit</a>
   </div>
 </div>
 
-<!-- Main Content -->
+<!-- Main -->
 <div class="card-container hidden" id="mainContent">
-  <h1 class="page-title">TRASHCORE SITE</h1>
+  <h1>TRASHCORE SITE</h1>
+
+  <!-- Services -->
   <div class="card">
     <a href="https://t.me/YourBotUsername"><img src="https://files.catbox.moe/7x996w.jpg" alt="Logo" class="logo"></a>
     <h2>MY SERVICES</h2>
-    <p>Select below:</p>
     <a href="https://t.me/TrashcoreBot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 1</a>
     <a href="http://t.me/Traschoreultra_bot" class="button telegram"><i class="fab fa-telegram-plane"></i> Server 2</a>
     <a href="https://t.me/theaccidentallygeniuses" class="button telegram"><i class="fab fa-telegram-plane"></i> Join Telegram group</a>
-    <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> Join WhatsApp Channel</a>
+    <a href="https://whatsapp.com/channel/0029VafrbsKG8l5EFBDDCy41" class="button whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp Channel</a>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
-  <!-- Music Search & Download -->
+  <!-- Music -->
   <div class="card" id="musicCard">
-    <h2>Music Search & Download</h2>
-    <input type="text" id="songQuery" placeholder="Enter song name or YouTube link">
+    <h2>Music Search</h2>
+    <input type="text" id="songQuery" placeholder="Enter song name">
     <button onclick="searchSong()">Search</button>
-    <div id="songResults" style="margin-top:10px; text-align:left;"></div>
+    <div id="songResults"></div>
   </div>
 
-  <!-- Public Chat -->
+  <!-- Chat -->
   <div class="card" id="chatCard">
     <h2>Public Chat</h2>
     <div class="chat-messages" id="publicMessages"></div>
@@ -155,143 +110,130 @@ body.logged-in #leagueSelect {
     <button onclick="sendPublicMessage()">Send</button>
   </div>
 
-  <!-- MediaFire Downloader -->
-  <div class="card" id="mediafireCard">
-    <h2>MediaFire Downloader</h2>
-    <input type="text" id="mediafireLink" placeholder="Paste your MediaFire link here">
-    <button onclick="downloadMediafire()">Download</button>
-    <div id="mediafireResult" style="margin-top:10px; text-align:left;"></div>
+  <!-- File Download -->
+  <div class="card" id="downloadCard">
+    <h2>File Downloads</h2>
+    <input type="text" id="fileLink" placeholder="Enter Mediafire link">
+    <button onclick="downloadFile()">Download</button>
+    <div id="downloadResult"></div>
   </div>
-
-  <!-- Football Section -->
-  <div class="card" id="footballCard">
-    <h2>⚽ Football Center</h2>
-    <label for="leagueSelect" style="display:block; margin-bottom:10px; font-weight:bold;">
-      Choose League:
-    </label>
-    <select id="leagueSelect">
-      <option value="PL">Premier League</option>
-      <option value="PD">La Liga</option>
-      <option value="SA">Serie A</option>
-      <option value="BL1">Bundesliga</option>
-      <option value="FL1">Ligue 1</option>
-    </select>
-    <h3 style="margin-top:15px;">Upcoming Matches</h3>
-    <ul class="match-list"></ul>
-    <h3>🏆 League Table</h3>
-    <table>
-      <thead><tr><th>#</th><th>Team</th><th>Pts</th><th>GD</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <h3>⭐ Top Scorers</h3>
-    <div class="top-scorers"></div>
-  </div>
-</div>
-
-<!-- Install Banner -->
-<div id="installBanner">
-  <span>Install Trashcore on your device for a better experience!</span>
-  <button id="installBtn">Install</button>
-  <button id="dismissInstall">No Thanks</button>
-</div>
-
-<div class="copyright">
-  ©️ 2023-2025 by Trashcore Devs
 </div>
 
 <script>
-/* ---------------- Football Data Integration ---------------- */
-const API_KEY = "YOUR_FOOTBALL_DATA_API_KEY";  
-const BASE_URL = "https://api.football-data.org/v4";
+let users = JSON.parse(localStorage.getItem("users")) || [];
+let publicMessages = JSON.parse(localStorage.getItem("publicMessages")) || [];
 
-async function fetchMatches(competition) {
-  const resp = await fetch(`${BASE_URL}/competitions/${competition}/matches?status=SCHEDULED`, {
-    headers: { "X-Auth-Token": API_KEY }
-  });
-  const obj = await resp.json();
-  return obj.matches || [];
+// Forms
+function showLogin(){ document.getElementById("signupForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
+function showSignup(){ document.getElementById("loginForm").classList.add("hidden"); document.getElementById("signupForm").classList.remove("hidden"); }
+
+function signup(){
+  const username=document.getElementById("signupUsername").value.trim();
+  const email=document.getElementById("signupEmail").value.trim();
+  const password=document.getElementById("signupPassword").value.trim();
+  if(!/^[a-zA-Z0-9_]{3,15}$/.test(username)) return alert("Invalid username!");
+  if(password.length<6) return alert("Password too short!");
+  if(users.find(u=>u.username===username)) return alert("User exists!");
+  users.push({username,email,password});
+  localStorage.setItem("users",JSON.stringify(users));
+  alert("Account created! Please login.");
+  showLogin();
 }
 
-async function fetchStandings(competition) {
-  const resp = await fetch(`${BASE_URL}/competitions/${competition}/standings`, {
-    headers: { "X-Auth-Token": API_KEY }
-  });
-  const obj = await resp.json();
-  const table = obj.standings.find(s => s.type === "TOTAL");
-  return table ? table.table : [];
+function login(){
+  const username=document.getElementById("loginUsername").value.trim();
+  const email=document.getElementById("loginEmail").value.trim();
+  const password=document.getElementById("loginPassword").value.trim();
+  const user=users.find(u=>u.username===username && u.email===email && u.password===password);
+  if(user){ enterApp(username); } else { alert("Invalid credentials!"); }
 }
 
-async function fetchTopScorers(competition) {
-  const resp = await fetch(`${BASE_URL}/competitions/${competition}/scorers`, {
-    headers: { "X-Auth-Token": API_KEY }
-  });
-  const obj = await resp.json();
-  return obj.scorers || [];
+function enterApp(username){
+  localStorage.setItem("loggedInUser",username);
+  document.body.classList.add("logged-in");
+  document.getElementById("signupForm").classList.add("hidden");
+  document.getElementById("loginForm").classList.add("hidden");
+  document.getElementById("mainContent").classList.remove("hidden");
+  document.getElementById("menu").style.display="block";
+  showPublicMessages();
 }
 
-function escapeHtml(s) {
-  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function logout(){
+  localStorage.removeItem("loggedInUser");
+  document.body.classList.remove("logged-in");
+  document.getElementById("mainContent").classList.add("hidden");
+  document.getElementById("menu").style.display="none";
+  showLogin();
 }
 
-function niceDate(isoString) {
-  const d = new Date(isoString);
-  return d.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
+// Restore session
+if(localStorage.getItem("loggedInUser")){ enterApp(localStorage.getItem("loggedInUser")); }
 
-async function updateFootballSection(competition = "PL") {
-  try {
-    const matches = await fetchMatches(competition);
-    const standings = await fetchStandings(competition);
-    const scorers = await fetchTopScorers(competition);
+// Menu
+const menuBtn=document.getElementById("menuBtn");
+const dropdown=document.getElementById("dropdownMenu");
+menuBtn.addEventListener("click",()=>{ menuBtn.classList.toggle("open"); dropdown.classList.toggle("show"); });
+window.addEventListener("click",e=>{ if(!e.target.closest(".menu")){ dropdown.classList.remove("show"); menuBtn.classList.remove("open"); }});
 
-    const matchesEl = document.querySelector("#footballCard .match-list");
-    matchesEl.innerHTML = "";
-    matches.slice(0,5).forEach(m => {
-      const li = document.createElement("li");
-      li.innerHTML = `${escapeHtml(m.homeTeam.name)} vs ${escapeHtml(m.awayTeam.name)} - ${niceDate(m.utcDate)}`;
-      matchesEl.appendChild(li);
+// Music search
+async function searchSong(){
+  const query=document.getElementById("songQuery").value.trim();
+  if(!query){ alert("Enter a song name"); return; }
+  const resultsDiv=document.getElementById("songResults");
+  resultsDiv.innerHTML="Searching...";
+  try{
+    const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=5`);
+    const data=await res.json();
+    resultsDiv.innerHTML="";
+    if(data.results.length===0){ resultsDiv.innerHTML="No results"; return; }
+    data.results.forEach(song=>{
+      const p=document.createElement("p");
+      p.innerHTML=`${song.trackName} - ${song.artistName} <a href="${song.previewUrl}" target="_blank">Preview</a>`;
+      resultsDiv.appendChild(p);
     });
-
-    const tableBody = document.querySelector("#footballCard table tbody");
-    tableBody.innerHTML = "";
-    standings.forEach(row => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${row.position}</td><td>${escapeHtml(row.team.name)}</td><td>${row.points}</td><td>${row.goalDifference}</td>`;
-      tableBody.appendChild(tr);
-    });
-
-    const scorersEl = document.querySelector("#footballCard .top-scorers");
-    scorersEl.innerHTML = "";
-    scorers.slice(0,5).forEach(s => {
-      const p = document.createElement("p");
-      p.innerHTML = `${escapeHtml(s.player.name)} — ${s.numberOfGoals} goals`;
-      scorersEl.appendChild(p);
-    });
-  } catch (err) {
-    console.error("Football API error:", err);
-  }
+  }catch{ resultsDiv.innerHTML="Error fetching songs."; }
 }
 
-const leagueSelect = document.getElementById("leagueSelect");
-leagueSelect.addEventListener("change", () => {
-  updateFootballSection(leagueSelect.value);
+// Chat
+function sendPublicMessage(){
+  const text=document.getElementById("publicInput").value.trim();
+  if(!text) return;
+  const from=localStorage.getItem("loggedInUser")||"Guest";
+  publicMessages.push({from,text,time:new Date().toLocaleTimeString()});
+  localStorage.setItem("publicMessages",JSON.stringify(publicMessages));
+  document.getElementById("publicInput").value="";
+  showPublicMessages();
+}
+function showPublicMessages(){
+  const box=document.getElementById("publicMessages");
+  box.innerHTML="";
+  publicMessages.forEach(m=>{
+    const p=document.createElement("p");
+    p.textContent=`[${m.time}] ${m.from}: ${m.text}`;
+    box.appendChild(p);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+
+// File downloads
+function downloadFile(){
+  const link=document.getElementById("fileLink").value.trim();
+  const out=document.getElementById("downloadResult");
+  if(!link||!link.includes("mediafire.com")){ out.innerHTML="Invalid Mediafire link"; return; }
+  out.innerHTML=`<a href="${link}" target="_blank" style="color:yellow;font-weight:bold;">Click here to download</a>`;
+}
+
+// Music toggle
+const music=document.getElementById("bgMusic");
+const musicBtn=document.getElementById("musicBtn");
+musicBtn.addEventListener("click",()=>{
+  if(music.muted){ music.muted=false; music.play(); musicBtn.textContent="🔊 Music Playing"; }
+  else{ music.pause(); musicBtn.textContent="🔇 Music Paused"; }
 });
-updateFootballSection(leagueSelect.value);
-setInterval(() => updateFootballSection(leagueSelect.value), 5 * 60 * 1000);
 
-/* ---------------- MediaFire Downloader ---------------- */
-function downloadMediafire(){
-  const link = document.getElementById('mediafireLink').value.trim();
-  const resultDiv = document.getElementById('mediafireResult');
-  if(!link){ alert("Please paste a MediaFire link."); return; }
-  resultDiv.innerHTML = `
-    <p>Click below to download your file:</p>
-    <a href="${link}" target="_blank" style="color:yellow; font-weight:bold;">Download File</a>
-  `;
-}
-
-/* ---------------- Existing Script (auth, chat, music, PWA, etc.) ---------------- */
-// ... keep your existing auth, chat, music, and PWA code here ...
+// Utils
+function refreshPage(){ location.reload(); }
+function exitPage(){ window.close(); }
 </script>
 </body>
 </html>
