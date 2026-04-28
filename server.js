@@ -1,14 +1,11 @@
 /**
  * Trashcore Web Pairing Server
- * Express + Socket.IO — drops the Telegram dependency entirely.
- * Each browser tab gets its own isolated pairing session via socket.id.
+ * Express + Socket.IO — frontend on Vercel, backend on Railway.
  */
 
-require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const pino = require('pino');
@@ -23,44 +20,23 @@ const {
     DisconnectReason
 } = require('@trashcore/baileys');
 
-// Allowed origins — set ALLOWED_ORIGINS in .env as comma-separated list
-// e.g. ALLOWED_ORIGINS=https://trashbots.zone.id,https://www.trashbots.zone.id
-// Falls back to localhost only if not set
-const rawOrigins = process.env.ALLOWED_ORIGINS || 'http://localhost:3000';
-const allowedOrigins = rawOrigins.split(',').map(o => o.trim());
-
-function originAllowed(origin) {
-    if (!origin) return false; // block non-browser requests (curl, etc.) unless you want them
-    return allowedOrigins.includes(origin);
-}
-
-const corsOptions = {
-    origin: (origin, callback) => {
-        if (originAllowed(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error(`CORS: origin '${origin}' not allowed`));
-        }
-    },
-    methods: ['GET'],
-    credentials: false
-};
+// ── Replace with your actual Vercel URL once deployed ──────────────────────
+const ALLOWED_ORIGIN = 'https://your-app.vercel.app';
 
 const app = express();
-app.use(cors(corsOptions));
+
+// CORS for /api/stats fetch calls from Vercel
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    next();
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: (origin, callback) => {
-            if (originAllowed(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error(`CORS: origin '${origin}' not allowed`));
-            }
-        },
-        methods: ['GET', 'POST'],
-        credentials: false
+        origin: ALLOWED_ORIGIN,
+        methods: ['GET', 'POST']
     }
 });
 
@@ -110,9 +86,6 @@ function cleanup(socketId) {
     removeFile(path.join(TEMP_DIR, session.id));
     activeSessions.delete(socketId);
 }
-
-// ─── Serve static frontend ─────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Stats API ─────────────────────────────────────────────────────────────
 app.get('/api/stats', (req, res) => {
