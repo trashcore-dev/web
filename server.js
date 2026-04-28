@@ -29,7 +29,7 @@ const {
 } = require('@trashcore/baileys');
 
 // ── Replace with your actual Vercel URL once deployed ──────────────────────
-const ALLOWED_ORIGIN = 'https://ultrax.drextrash.online';
+const ALLOWED_ORIGIN = 'https://proxy-plum-one-43.vercel.app';
 
 const app = express();
 
