@@ -1,11 +1,13 @@
 /**
  * Trashcore Web Pairing Server
  * Express + Socket.IO — frontend on Vercel, backend on Railway.
+ * Stats persisted in Neon PostgreSQL.
  */
 
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const pino = require('pino');
@@ -16,6 +18,7 @@ function makeid(num = 8) {
     for (let i = 0; i < num; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
     return result;
 }
+
 const {
     default: Mbuvi_Tech,
     useMultiFileAuthState,
@@ -30,7 +33,6 @@ const ALLOWED_ORIGIN = 'https://proxy-plum-one-43.vercel.app';
 
 const app = express();
 
-// CORS for /api/stats fetch calls from Vercel
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
     res.setHeader('Access-Control-Allow-Methods', 'GET');
@@ -49,42 +51,91 @@ const PORT = process.env.PORT || 3000;
 const TEMP_DIR = path.join(__dirname, 'temp');
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
-// ─── Stats ─────────────────────────────────────────────────────────────────
-const STATS_FILE = path.join(__dirname, 'stats.json');
+// ─── PostgreSQL ─────────────────────────────────────────────────────────────
+const db = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+});
 
-function loadStats() {
-    try {
-        if (fs.existsSync(STATS_FILE)) return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
-    } catch (_) {}
-    return { totalUsers: 0, uniqueUsers: [], totalRequested: 0, totalSuccessful: 0, totalFailed: 0, startedAt: Date.now(), hourly: [] };
+// In-memory cache so pairing never waits on DB
+let statsCache = {
+    totalUsers: 0,
+    totalRequested: 0,
+    totalSuccessful: 0,
+    totalFailed: 0,
+    startedAt: Date.now(),
+    uniqueUsers: new Set()
+};
+
+async function initDb() {
+    await db.query(`
+        CREATE TABLE IF NOT EXISTS pairing_stats (
+            id INTEGER PRIMARY KEY DEFAULT 1,
+            total_users INTEGER DEFAULT 0,
+            total_requested INTEGER DEFAULT 0,
+            total_successful INTEGER DEFAULT 0,
+            total_failed INTEGER DEFAULT 0,
+            started_at BIGINT DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
+            unique_users TEXT DEFAULT '[]'
+        )
+    `);
+
+    await db.query(`
+        CREATE TABLE IF NOT EXISTS pairing_snapshots (
+            id SERIAL PRIMARY KEY,
+            recorded_at BIGINT NOT NULL,
+            total_successful INTEGER NOT NULL,
+            total_requested INTEGER NOT NULL,
+            active_sessions INTEGER NOT NULL
+        )
+    `);
+
+    // Seed row if missing
+    await db.query(`
+        INSERT INTO pairing_stats (id) VALUES (1)
+        ON CONFLICT (id) DO NOTHING
+    `);
+
+    // Load into cache
+    const { rows } = await db.query('SELECT * FROM pairing_stats WHERE id = 1');
+    if (rows.length) {
+        const r = rows[0];
+        statsCache.totalUsers      = r.total_users;
+        statsCache.totalRequested  = r.total_requested;
+        statsCache.totalSuccessful = r.total_successful;
+        statsCache.totalFailed     = r.total_failed;
+        statsCache.startedAt       = Number(r.started_at);
+        try { statsCache.uniqueUsers = new Set(JSON.parse(r.unique_users)); } catch (_) {}
+    }
+
+    console.log('✅ PostgreSQL connected, stats loaded');
 }
 
-function saveStats(s) {
-    try { fs.writeFileSync(STATS_FILE, JSON.stringify(s, null, 2)); } catch (_) {}
+// Flush cache → DB (called after every stat change, fire-and-forget)
+function flushStats() {
+    db.query(
+        `UPDATE pairing_stats SET
+            total_users      = $1,
+            total_requested  = $2,
+            total_successful = $3,
+            total_failed     = $4,
+            unique_users     = $5
+         WHERE id = 1`,
+        [
+            statsCache.totalUsers,
+            statsCache.totalRequested,
+            statsCache.totalSuccessful,
+            statsCache.totalFailed,
+            JSON.stringify([...statsCache.uniqueUsers])
+        ]
+    ).catch(err => console.error('DB flush error:', err));
 }
-
-const stats = loadStats();
-if (!stats.hourly) stats.hourly = [];
-
-// Record a data point every 10 minutes (keep last 24 hours = 144 points)
-function recordHourlySnapshot() {
-    const point = {
-        t: Date.now(),
-        s: stats.totalSuccessful,
-        r: stats.totalRequested,
-        a: activeSessions.size
-    };
-    stats.hourly.push(point);
-    if (stats.hourly.length > 144) stats.hourly.shift();
-    saveStats(stats);
-}
-setInterval(recordHourlySnapshot, 10 * 60 * 1000);
 
 function trackUser(socketId) {
-    if (!stats.uniqueUsers.includes(socketId)) {
-        stats.uniqueUsers.push(socketId);
-        stats.totalUsers = stats.uniqueUsers.length;
-        saveStats(stats);
+    if (!statsCache.uniqueUsers.has(socketId)) {
+        statsCache.uniqueUsers.add(socketId);
+        statsCache.totalUsers = statsCache.uniqueUsers.size;
+        flushStats();
     }
 }
 
@@ -99,8 +150,25 @@ function formatUptime(ms) {
     return `${s}s`;
 }
 
+// ─── Snapshot every 10 min → DB ────────────────────────────────────────────
+function recordSnapshot() {
+    db.query(
+        `INSERT INTO pairing_snapshots (recorded_at, total_successful, total_requested, active_sessions)
+         VALUES ($1, $2, $3, $4)`,
+        [Date.now(), statsCache.totalSuccessful, statsCache.totalRequested, activeSessions.size]
+    ).catch(err => console.error('Snapshot error:', err));
+
+    // Keep only last 144 snapshots (24h)
+    db.query(
+        `DELETE FROM pairing_snapshots WHERE id NOT IN (
+            SELECT id FROM pairing_snapshots ORDER BY recorded_at DESC LIMIT 144
+        )`
+    ).catch(() => {});
+}
+setInterval(recordSnapshot, 10 * 60 * 1000);
+
 // ─── Active sessions ───────────────────────────────────────────────────────
-const activeSessions = new Map(); // socketId → { id, trashcore, retries }
+const activeSessions = new Map();
 
 function removeFile(filePath) {
     if (!fs.existsSync(filePath)) return;
@@ -119,22 +187,34 @@ function cleanup(socketId) {
 }
 
 // ─── Stats API ─────────────────────────────────────────────────────────────
-app.get('/api/stats', (req, res) => {
-    const uptimeMs = Date.now() - stats.startedAt;
-    const successRate = stats.totalRequested > 0
-        ? ((stats.totalSuccessful / stats.totalRequested) * 100).toFixed(1)
-        : '0.0';
-    res.json({
-        totalUsers: stats.totalUsers,
-        totalSuccessful: stats.totalSuccessful,
-        totalFailed: stats.totalFailed,
-        totalRequested: stats.totalRequested,
-        activeSessions: activeSessions.size,
-        successRate,
-        uptime: uptimeMs,
-        uptimeFormatted: formatUptime(uptimeMs),
-        hourly: stats.hourly
-    });
+app.get('/api/stats', async (req, res) => {
+    try {
+        const uptimeMs = Date.now() - statsCache.startedAt;
+        const successRate = statsCache.totalRequested > 0
+            ? ((statsCache.totalSuccessful / statsCache.totalRequested) * 100).toFixed(1)
+            : '0.0';
+
+        // Fetch snapshots for graph
+        const { rows: hourly } = await db.query(
+            `SELECT recorded_at AS t, total_successful AS s, total_requested AS r, active_sessions AS a
+             FROM pairing_snapshots ORDER BY recorded_at ASC`
+        );
+
+        res.json({
+            totalUsers:      statsCache.totalUsers,
+            totalSuccessful: statsCache.totalSuccessful,
+            totalFailed:     statsCache.totalFailed,
+            totalRequested:  statsCache.totalRequested,
+            activeSessions:  activeSessions.size,
+            successRate,
+            uptime:          uptimeMs,
+            uptimeFormatted: formatUptime(uptimeMs),
+            hourly
+        });
+    } catch (err) {
+        console.error('Stats API error:', err);
+        res.status(500).json({ error: 'Failed to load stats' });
+    }
 });
 
 // ─── Socket.IO ─────────────────────────────────────────────────────────────
@@ -142,7 +222,6 @@ io.on('connection', (socket) => {
     console.log(`[+] Connected: ${socket.id}`);
 
     socket.on('start_pairing', async ({ phone }) => {
-        // Validate phone
         const num = (phone || '').replace(/[^0-9]/g, '');
         if (!num || num.length < 7 || num.length > 15) {
             return socket.emit('error', { message: 'Invalid phone number. Include country code, e.g. 2547XXXXXXXX' });
@@ -153,8 +232,8 @@ io.on('connection', (socket) => {
         }
 
         trackUser(socket.id);
-        stats.totalRequested++;
-        saveStats(stats);
+        statsCache.totalRequested++;
+        flushStats();
 
         socket.emit('status', { step: 'connecting', message: `Starting pairing for +${num}…` });
 
@@ -188,7 +267,6 @@ io.on('connection', (socket) => {
 
                 sessionEntry.trashcore = trashcore;
 
-                // Guard — only request code once, never again on reconnect
                 if (!trashcore.authState.creds.registered && !sessionEntry.codeSent) {
                     sessionEntry.codeSent = true;
                     await delay(1500);
@@ -207,7 +285,6 @@ io.on('connection', (socket) => {
 
                     if (connection === 'open') {
                         connectionClosed = true;
-                        // Wait longer — give WhatsApp time to fully register keys
                         await delay(8000);
 
                         try {
@@ -220,23 +297,21 @@ io.on('connection', (socket) => {
                                 sessionId = 'trashcore~' + Buffer.from(data).toString('base64');
                             }
 
-                            // Send to WhatsApp
                             await trashcore.sendMessage(trashcore.user.id, { text: sessionId });
 
-                            // Emit to browser
                             socket.emit('session_ready', {
                                 sessionId,
                                 message: 'Session ID also sent to your WhatsApp!'
                             });
 
-                            stats.totalSuccessful++;
-                            saveStats(stats);
+                            statsCache.totalSuccessful++;
+                            flushStats();
 
                         } catch (err) {
                             console.error('Session emit error:', err);
                             socket.emit('error', { message: 'Paired but failed to get session ID. Try again.' });
-                            stats.totalFailed++;
-                            saveStats(stats);
+                            statsCache.totalFailed++;
+                            flushStats();
                         } finally {
                             cleanup(socket.id);
                         }
@@ -244,19 +319,13 @@ io.on('connection', (socket) => {
                     } else if (connection === 'close' && !connectionClosed) {
                         const statusCode = lastDisconnect?.error?.output?.statusCode;
                         const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
-
-                        // 515 = stream error mid-handshake — WhatsApp does this
-                        // normally right after the user enters the pairing code.
-                        // Silently reconnect so the 'open' event can fire.
                         const isHandshake = statusCode === 515;
 
                         if (isLoggedOut) {
-                            // Deliberate logout — just clean up silently
                             connectionClosed = true;
                             cleanup(socket.id);
 
                         } else if (isHandshake || sessionEntry.codeSent) {
-                            // Mid-login reconnect — retry quietly, no error shown
                             if (sessionEntry.retries < 5) {
                                 sessionEntry.retries++;
                                 await delay(2000);
@@ -264,16 +333,15 @@ io.on('connection', (socket) => {
                             } else {
                                 connectionClosed = true;
                                 cleanup(socket.id);
-                                stats.totalFailed++;
-                                saveStats(stats);
+                                statsCache.totalFailed++;
+                                flushStats();
                                 socket.emit('error', { message: 'Could not complete login. Please try again.' });
                             }
                         } else {
-                            // Unexpected drop before code was sent
                             connectionClosed = true;
                             cleanup(socket.id);
-                            stats.totalFailed++;
-                            saveStats(stats);
+                            statsCache.totalFailed++;
+                            flushStats();
                             socket.emit('error', { message: 'Connection closed. Please try again.' });
                         }
                     }
@@ -283,8 +351,8 @@ io.on('connection', (socket) => {
                 console.error('Pairing error:', err);
                 connectionClosed = true;
                 cleanup(socket.id);
-                stats.totalFailed++;
-                saveStats(stats);
+                statsCache.totalFailed++;
+                flushStats();
                 socket.emit('error', { message: 'Service unavailable. Please try again.' });
             }
         }
@@ -303,9 +371,15 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(PORT, () => {
-    console.log(`🌐 Trashcore Web Pairing running on http://localhost:${PORT}`);
+// ─── Boot ───────────────────────────────────────────────────────────────────
+initDb().then(() => {
+    server.listen(PORT, () => {
+        console.log(`🌐 Trashcore Web Pairing running on port ${PORT}`);
+    });
+}).catch(err => {
+    console.error('❌ DB init failed:', err);
+    process.exit(1);
 });
 
 process.on('unhandledRejection', (err) => console.error('UNHANDLED:', err));
-process.on('uncaughtException', (err) => console.error('UNCAUGHT:', err));
+process.on('uncaughtException',  (err) => console.error('UNCAUGHT:', err));
