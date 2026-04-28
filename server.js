@@ -51,13 +51,13 @@ const PORT = process.env.PORT || 3000;
 const TEMP_DIR = path.join(__dirname, 'temp');
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
-// ─── PostgreSQL ─────────────────────────────────────────────────────────────
+// ─── PostgreSQL (Neon) ──────────────────────────────────────────────────────
 const db = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// In-memory cache so pairing never waits on DB
+// In-memory cache — pairing logic never touches DB directly
 let statsCache = {
     totalUsers: 0,
     totalRequested: 0,
@@ -75,7 +75,7 @@ async function initDb() {
             total_requested INTEGER DEFAULT 0,
             total_successful INTEGER DEFAULT 0,
             total_failed INTEGER DEFAULT 0,
-            started_at BIGINT DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
+            started_at BIGINT DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
             unique_users TEXT DEFAULT '[]'
         )
     `);
@@ -96,7 +96,7 @@ async function initDb() {
         ON CONFLICT (id) DO NOTHING
     `);
 
-    // Load into cache
+    // Load persisted stats into cache
     const { rows } = await db.query('SELECT * FROM pairing_stats WHERE id = 1');
     if (rows.length) {
         const r = rows[0];
@@ -108,10 +108,10 @@ async function initDb() {
         try { statsCache.uniqueUsers = new Set(JSON.parse(r.unique_users)); } catch (_) {}
     }
 
-    console.log('✅ PostgreSQL connected, stats loaded');
+    console.log(`✅ PostgreSQL connected — ${statsCache.totalSuccessful} sessions loaded from DB`);
 }
 
-// Flush cache → DB (called after every stat change, fire-and-forget)
+// Fire-and-forget flush to DB after every stat change
 function flushStats() {
     db.query(
         `UPDATE pairing_stats SET
@@ -150,7 +150,7 @@ function formatUptime(ms) {
     return `${s}s`;
 }
 
-// ─── Snapshot every 10 min → DB ────────────────────────────────────────────
+// ─── Snapshot every 10 min ─────────────────────────────────────────────────
 function recordSnapshot() {
     db.query(
         `INSERT INTO pairing_snapshots (recorded_at, total_successful, total_requested, active_sessions)
@@ -158,7 +158,7 @@ function recordSnapshot() {
         [Date.now(), statsCache.totalSuccessful, statsCache.totalRequested, activeSessions.size]
     ).catch(err => console.error('Snapshot error:', err));
 
-    // Keep only last 144 snapshots (24h)
+    // Keep only last 144 rows (24h)
     db.query(
         `DELETE FROM pairing_snapshots WHERE id NOT IN (
             SELECT id FROM pairing_snapshots ORDER BY recorded_at DESC LIMIT 144
@@ -178,6 +178,7 @@ function removeFile(filePath) {
 function cleanup(socketId) {
     const session = activeSessions.get(socketId);
     if (!session) return;
+    if (session.keepAliveTimer) clearInterval(session.keepAliveTimer);
     try {
         if (session.trashcore?.ws) session.trashcore.ws.close();
         if (session.trashcore?.end) session.trashcore.end();
@@ -194,7 +195,6 @@ app.get('/api/stats', async (req, res) => {
             ? ((statsCache.totalSuccessful / statsCache.totalRequested) * 100).toFixed(1)
             : '0.0';
 
-        // Fetch snapshots for graph
         const { rows: hourly } = await db.query(
             `SELECT recorded_at AS t, total_successful AS s, total_requested AS r, active_sessions AS a
              FROM pairing_snapshots ORDER BY recorded_at ASC`
@@ -238,7 +238,7 @@ io.on('connection', (socket) => {
         socket.emit('status', { step: 'connecting', message: `Starting pairing for +${num}…` });
 
         const id = makeid(8);
-        const sessionEntry = { id, trashcore: null, retries: 0, codeSent: false };
+        const sessionEntry = { id, trashcore: null, retries: 0, codeSent: false, keepAliveTimer: null };
         activeSessions.set(socket.id, sessionEntry);
 
         async function startPairing() {
@@ -262,7 +262,9 @@ io.on('connection', (socket) => {
                     browser: ['Ubuntu', 'Opera', '100.0.4815.0'],
                     shouldSyncHistoryMessage: false,
                     syncFullHistory: false,
-                    markOnlineOnConnect: false
+                    markOnlineOnConnect: false,
+                    // Keep WS alive — Railway kills idle sockets after ~30s
+                    keepAliveIntervalMs: 15_000
                 });
 
                 sessionEntry.trashcore = trashcore;
@@ -275,6 +277,13 @@ io.on('connection', (socket) => {
 
                     socket.emit('pairing_code', { code: formatted });
                     socket.emit('status', { step: 'waiting', message: 'Enter the code in WhatsApp → Linked Devices → Link with phone number' });
+
+                    // Extra safety: ping the WS ourselves every 20s while waiting
+                    sessionEntry.keepAliveTimer = setInterval(() => {
+                        try {
+                            if (trashcore?.ws?.readyState === 1) trashcore.ws.ping();
+                        } catch (_) {}
+                    }, 20_000);
                 }
 
                 trashcore.ev.on('creds.update', saveCreds);
