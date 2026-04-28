@@ -26,7 +26,7 @@ const {
 } = require('@trashcore/baileys');
 
 // ── Replace with your actual Vercel URL once deployed ──────────────────────
-const ALLOWED_ORIGIN = 'https://proxy-plum-one-43.vercel.app';
+const ALLOWED_ORIGIN = 'https://your-app.vercel.app';
 
 const app = express();
 
@@ -211,22 +211,36 @@ io.on('connection', (socket) => {
                         const statusCode = lastDisconnect?.error?.output?.statusCode;
                         const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
 
-                        // Never retry while waiting for user to enter pairing code —
-                        // that causes the spam loop. Only retry on unexpected drops
-                        // after the code was already confirmed (connection was 'open' once).
-                        if (!isLoggedOut && !sessionEntry.codeSent) {
-                            sessionEntry.retries++;
-                            socket.emit('status', { step: 'retrying', message: `Reconnecting… (attempt ${sessionEntry.retries}/3)` });
-                            await delay(10000);
-                            startPairing();
-                        } else {
+                        // 515 = stream error mid-handshake — WhatsApp does this
+                        // normally right after the user enters the pairing code.
+                        // Silently reconnect so the 'open' event can fire.
+                        const isHandshake = statusCode === 515;
+
+                        if (isLoggedOut) {
+                            // Deliberate logout — just clean up silently
                             connectionClosed = true;
                             cleanup(socket.id);
-                            if (!isLoggedOut) {
+
+                        } else if (isHandshake || sessionEntry.codeSent) {
+                            // Mid-login reconnect — retry quietly, no error shown
+                            if (sessionEntry.retries < 5) {
+                                sessionEntry.retries++;
+                                await delay(2000);
+                                startPairing();
+                            } else {
+                                connectionClosed = true;
+                                cleanup(socket.id);
                                 stats.totalFailed++;
                                 saveStats(stats);
-                                socket.emit('error', { message: 'Connection closed. Please try again.' });
+                                socket.emit('error', { message: 'Could not complete login. Please try again.' });
                             }
+                        } else {
+                            // Unexpected drop before code was sent
+                            connectionClosed = true;
+                            cleanup(socket.id);
+                            stats.totalFailed++;
+                            saveStats(stats);
+                            socket.emit('error', { message: 'Connection closed. Please try again.' });
                         }
                     }
                 });
