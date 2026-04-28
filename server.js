@@ -56,7 +56,7 @@ function loadStats() {
     try {
         if (fs.existsSync(STATS_FILE)) return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
     } catch (_) {}
-    return { totalUsers: 0, uniqueUsers: [], totalRequested: 0, totalSuccessful: 0, totalFailed: 0, startedAt: Date.now() };
+    return { totalUsers: 0, uniqueUsers: [], totalRequested: 0, totalSuccessful: 0, totalFailed: 0, startedAt: Date.now(), hourly: [] };
 }
 
 function saveStats(s) {
@@ -64,6 +64,21 @@ function saveStats(s) {
 }
 
 const stats = loadStats();
+if (!stats.hourly) stats.hourly = [];
+
+// Record a data point every 10 minutes (keep last 24 hours = 144 points)
+function recordHourlySnapshot() {
+    const point = {
+        t: Date.now(),
+        s: stats.totalSuccessful,
+        r: stats.totalRequested,
+        a: activeSessions.size
+    };
+    stats.hourly.push(point);
+    if (stats.hourly.length > 144) stats.hourly.shift();
+    saveStats(stats);
+}
+setInterval(recordHourlySnapshot, 10 * 60 * 1000);
 
 function trackUser(socketId) {
     if (!stats.uniqueUsers.includes(socketId)) {
@@ -71,6 +86,17 @@ function trackUser(socketId) {
         stats.totalUsers = stats.uniqueUsers.length;
         saveStats(stats);
     }
+}
+
+function formatUptime(ms) {
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d ${h % 24}h ${m % 60}m`;
+    if (h > 0) return `${h}h ${m % 60}m`;
+    if (m > 0) return `${m}m ${s % 60}s`;
+    return `${s}s`;
 }
 
 // ─── Active sessions ───────────────────────────────────────────────────────
@@ -94,12 +120,20 @@ function cleanup(socketId) {
 
 // ─── Stats API ─────────────────────────────────────────────────────────────
 app.get('/api/stats', (req, res) => {
+    const uptimeMs = Date.now() - stats.startedAt;
+    const successRate = stats.totalRequested > 0
+        ? ((stats.totalSuccessful / stats.totalRequested) * 100).toFixed(1)
+        : '0.0';
     res.json({
         totalUsers: stats.totalUsers,
         totalSuccessful: stats.totalSuccessful,
+        totalFailed: stats.totalFailed,
         totalRequested: stats.totalRequested,
         activeSessions: activeSessions.size,
-        uptime: Date.now() - stats.startedAt
+        successRate,
+        uptime: uptimeMs,
+        uptimeFormatted: formatUptime(uptimeMs),
+        hourly: stats.hourly
     });
 });
 
