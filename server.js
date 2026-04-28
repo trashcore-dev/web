@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
         socket.emit('status', { step: 'connecting', message: `Starting pairing for +${num}…` });
 
         const id = makeid(8);
-        const sessionEntry = { id, trashcore: null, retries: 0 };
+        const sessionEntry = { id, trashcore: null, retries: 0, codeSent: false };
         activeSessions.set(socket.id, sessionEntry);
 
         async function startPairing() {
@@ -154,9 +154,11 @@ io.on('connection', (socket) => {
 
                 sessionEntry.trashcore = trashcore;
 
-                if (!trashcore.authState.creds.registered) {
+                // Guard — only request code once, never again on reconnect
+                if (!trashcore.authState.creds.registered && !sessionEntry.codeSent) {
+                    sessionEntry.codeSent = true;
                     await delay(1500);
-                    const code = await trashcore.requestPairingCode(num, 'TRASHBOT');
+                    const code = await trashcore.requestPairingCode(num);
                     const formatted = code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code;
 
                     socket.emit('pairing_code', { code: formatted });
@@ -171,7 +173,8 @@ io.on('connection', (socket) => {
 
                     if (connection === 'open') {
                         connectionClosed = true;
-                        await delay(5000);
+                        // Wait longer — give WhatsApp time to fully register keys
+                        await delay(8000);
 
                         try {
                             let sessionId;
@@ -208,7 +211,10 @@ io.on('connection', (socket) => {
                         const statusCode = lastDisconnect?.error?.output?.statusCode;
                         const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
 
-                        if (!isLoggedOut && sessionEntry.retries < 3) {
+                        // Never retry while waiting for user to enter pairing code —
+                        // that causes the spam loop. Only retry on unexpected drops
+                        // after the code was already confirmed (connection was 'open' once).
+                        if (!isLoggedOut && !sessionEntry.codeSent) {
                             sessionEntry.retries++;
                             socket.emit('status', { step: 'retrying', message: `Reconnecting… (attempt ${sessionEntry.retries}/3)` });
                             await delay(10000);
@@ -219,7 +225,7 @@ io.on('connection', (socket) => {
                             if (!isLoggedOut) {
                                 stats.totalFailed++;
                                 saveStats(stats);
-                                socket.emit('error', { message: 'Connection failed after retries. Please try again.' });
+                                socket.emit('error', { message: 'Connection closed. Please try again.' });
                             }
                         }
                     }
