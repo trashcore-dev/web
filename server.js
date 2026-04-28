@@ -1,4 +1,4 @@
- /**
+/**
  * Trashcore Web Pairing Server
  * Express + Socket.IO — frontend on Vercel, backend on Railway.
  */
@@ -10,7 +10,12 @@ const fs = require('fs');
 const path = require('path');
 const pino = require('pino');
 
-const { makeid } = require('./id');
+function makeid(num = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < num; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+    return result;
+}
 const {
     default: Mbuvi_Tech,
     useMultiFileAuthState,
