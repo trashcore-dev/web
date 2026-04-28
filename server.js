@@ -1,4 +1,4 @@
-/**
+ /**
  * Trashcore Web Pairing Server
  * Express + Socket.IO — frontend on Vercel, backend on Railway.
  */
